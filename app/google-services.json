@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1006158995392",
+    "project_id": "untilfailure-ca9de",
+    "storage_bucket": "untilfailure-ca9de.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006158995392:android:9e28e4762fe3ce09563225",
+        "android_client_info": {
+          "package_name": "fr.isen.gomez.untilfailure"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnTbmgO0s2IDqKjY0xjSb74soUokARZys"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">UntilFailure</string>
+    <string name="title_activity_accueil">AccueilActivity</string>
+    <string name="title_activity_connexion">ConnexionActivity</string>
+    <string name="title_activity_data_performances">DataPerformancesActivity</string>
+    <string name="title_activity_inscription">InscriptionActivity</string>
+    <string name="title_activity_profile_user">ProfileUserActivity</string>
+    <string name="title_activity_seance">SeanceActivity</string>
+</resources>
