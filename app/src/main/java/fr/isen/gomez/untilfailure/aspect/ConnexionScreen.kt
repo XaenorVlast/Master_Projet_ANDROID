@@ -1,5 +1,6 @@
 package fr.isen.gomez.untilfailure.aspect
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,9 +30,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import fr.isen.gomez.untilfailure.SeanceActivity
+import fr.isen.gomez.untilfailure.model.AccueilActivity
 import fr.isen.gomez.untilfailure.viewModel.ConnexionViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun ConnexionScreen(viewModel: ConnexionViewModel) {
     var email by remember { mutableStateOf("") }
@@ -66,8 +69,8 @@ fun ConnexionScreen(viewModel: ConnexionViewModel) {
 
                 Button(
                     onClick = {
-                        viewModel.signIn(email, password, context, {
-                            // Naviguer vers la prochaine activité en cas de succès
+                        viewModel.signIn(email, password, {
+                            context.startActivity(Intent(context, SeanceActivity::class.java))
                         }, { error ->
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         })

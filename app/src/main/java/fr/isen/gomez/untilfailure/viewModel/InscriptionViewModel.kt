@@ -32,9 +32,9 @@ class InscriptionViewModel : ViewModel() {
             if (task.isSuccessful) {
                 val userId = auth.currentUser?.uid
                 userId?.let {
-                    val user = User(nom, prenom, age, objectif, email, "") // Ne pas inclure le mot de passe ici
-                    val database = Firebase.database("https://your-firebase-database-url.com")
-                    database.getReference("users").child(it).setValue(user).addOnCompleteListener { dbTask ->
+                    val user = User(nom, prenom, age, objectif, email) // Ne pas inclure le mot de passe ici
+                    val database = Firebase.database("https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/")
+                    database.getReference("user").child(it).setValue(user).addOnCompleteListener { dbTask ->
                         if (dbTask.isSuccessful) {
                             onComplete(true)
                         } else {

@@ -1,22 +1,14 @@
 package fr.isen.gomez.untilfailure.viewModel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.test.core.app.ApplicationProvider
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 class ConnexionViewModel : ViewModel() {
-    private lateinit var auth: FirebaseAuth
+    private var auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    init {
-        FirebaseApp.initializeApp(ApplicationProvider.getApplicationContext())
-        auth = FirebaseAuth.getInstance()
-    }
-
-    fun signIn(email: String, password: String, context: Context, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun signIn(email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (email.isBlank() || password.isBlank()) {
             onError("Veuillez remplir tous les champs.")
             return

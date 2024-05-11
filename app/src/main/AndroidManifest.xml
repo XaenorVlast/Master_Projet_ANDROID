@@ -8,65 +8,66 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:name="fr.isen.gomez.untilfailure.MyApp"
+    android:allowBackup="true"
+    android:dataExtractionRules="@xml/data_extraction_rules"
+    android:fullBackupContent="@xml/backup_rules"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    android:supportsRtl="true"
+    android:theme="@style/Theme.UntilFailure"
+    tools:targetApi="31">
+
+    <activity
+        android:name=".SeanceActivity"
+        android:exported="false"
+        android:label="@string/title_activity_seance"
+        android:theme="@style/Theme.UntilFailure" />
+    <activity
+        android:name=".ProfileUserActivity"
+        android:exported="false"
+        android:label="@string/title_activity_profile_user"
+        android:theme="@style/Theme.UntilFailure" />
+    <activity
+        android:name=".model.InscriptionActivity"
+        android:exported="false"
+        android:label="@string/title_activity_inscription"
+        android:theme="@style/Theme.UntilFailure" />
+    <activity
+        android:name=".DataPerformancesActivity"
+        android:exported="false"
+        android:label="@string/title_activity_data_performances"
+        android:theme="@style/Theme.UntilFailure" />
+    <activity
+        android:name=".model.ConnexionActivity"
+        android:exported="false"
+        android:label="@string/title_activity_connexion"
+        android:theme="@style/Theme.UntilFailure" />
+    <activity
+        android:name=".model.AccueilActivity"
+        android:exported="false"
+        android:label="@string/title_activity_accueil"
+        android:theme="@style/Theme.UntilFailure" />
+    <activity
+        android:name=".SettingsUserActivity"
+        android:exported="false"
+        android:theme="@style/Theme.UntilFailure" />
+
+    <meta-data
+        android:name="com.google.firebase.database.DEFAULT_URL"
+        android:value="https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/" />
+
+    <activity
+        android:name=".model.MainActivity"
+        android:exported="true"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.UntilFailure"
-        tools:targetApi="31">
-        <activity
-            android:name=".SeanceActivity"
-            android:exported="false"
-            android:label="@string/title_activity_seance"
-            android:theme="@style/Theme.UntilFailure" />
-        <activity
-            android:name=".ProfileUserActivity"
-            android:exported="false"
-            android:label="@string/title_activity_profile_user"
-            android:theme="@style/Theme.UntilFailure" />
-        <activity
-            android:name=".model.InscriptionActivity"
-            android:exported="false"
-            android:label="@string/title_activity_inscription"
-            android:theme="@style/Theme.UntilFailure" />
-        <activity
-            android:name=".DataPerformancesActivity"
-            android:exported="false"
-            android:label="@string/title_activity_data_performances"
-            android:theme="@style/Theme.UntilFailure" />
-        <activity
-            android:name=".model.ConnexionActivity"
-            android:exported="false"
-            android:label="@string/title_activity_connexion"
-            android:theme="@style/Theme.UntilFailure" />
-        <activity
-            android:name=".AccueilActivity"
-            android:exported="false"
-            android:label="@string/title_activity_accueil"
-            android:theme="@style/Theme.UntilFailure" />
-        <activity
-            android:name=".SettingsUserActivity"
-            android:exported="false"
-            android:theme="@style/Theme.UntilFailure" />
+        android:theme="@style/Theme.UntilFailure">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+</application>
 
-        <meta-data
-            android:name="com.google.firebase.database.DEFAULT_URL"
-            android:value="https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/" />
-
-        <activity
-            android:name=".model.MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.UntilFailure">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-
-</manifest>
+    </manifest>

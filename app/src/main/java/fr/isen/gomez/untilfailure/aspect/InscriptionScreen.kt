@@ -1,5 +1,6 @@
 package fr.isen.gomez.untilfailure.aspect
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import fr.isen.gomez.untilfailure.model.AccueilActivity
 import fr.isen.gomez.untilfailure.viewModel.InscriptionViewModel
 
 
@@ -65,7 +67,7 @@ fun InscriptionScreen(viewModel: InscriptionViewModel) {
                         viewModel.registerUser(nom, prenom, email, password, age, objectif, context) { success ->
                             if (success) {
                                 Toast.makeText(context, "Inscription réussie!", Toast.LENGTH_LONG).show()
-                                // Navigation post-inscription
+                                context.startActivity(Intent(context, AccueilActivity::class.java))
                             } else {
                                 Toast.makeText(context, "Échec de l'inscription.", Toast.LENGTH_LONG).show()
                             }
