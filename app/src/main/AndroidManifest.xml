@@ -28,7 +28,7 @@
             android:label="@string/title_activity_profile_user"
             android:theme="@style/Theme.UntilFailure" />
         <activity
-            android:name=".InscriptionActivity"
+            android:name=".model.InscriptionActivity"
             android:exported="false"
             android:label="@string/title_activity_inscription"
             android:theme="@style/Theme.UntilFailure" />
@@ -38,7 +38,7 @@
             android:label="@string/title_activity_data_performances"
             android:theme="@style/Theme.UntilFailure" />
         <activity
-            android:name=".ConnexionActivity"
+            android:name=".model.ConnexionActivity"
             android:exported="false"
             android:label="@string/title_activity_connexion"
             android:theme="@style/Theme.UntilFailure" />
@@ -57,7 +57,7 @@
             android:value="https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".model.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.UntilFailure">
