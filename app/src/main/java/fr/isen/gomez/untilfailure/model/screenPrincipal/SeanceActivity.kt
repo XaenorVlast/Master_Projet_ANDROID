@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure
+package fr.isen.gomez.untilfailure.model.screenPrincipal
 
 import android.content.Intent
 import android.os.Bundle
@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.ui.theme.UntilFailureTheme
 
 class SeanceActivity : ComponentActivity() {

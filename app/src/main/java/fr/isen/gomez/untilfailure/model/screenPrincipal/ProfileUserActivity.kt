@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure
+package fr.isen.gomez.untilfailure.model.screenPrincipal
 
 import android.content.Intent
 import android.os.Bundle
@@ -21,6 +21,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.ui.theme.UntilFailureTheme
 
 class ProfileUserActivity : ComponentActivity() {

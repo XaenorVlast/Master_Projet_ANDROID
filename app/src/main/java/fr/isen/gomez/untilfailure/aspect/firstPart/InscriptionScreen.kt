@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure.aspect
+package fr.isen.gomez.untilfailure.aspect.firstPart
 
 import android.content.Intent
 import android.widget.Toast
@@ -25,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import fr.isen.gomez.untilfailure.model.AccueilActivity
-import fr.isen.gomez.untilfailure.viewModel.InscriptionViewModel
+import fr.isen.gomez.untilfailure.model.firstPart.AccueilActivity
+import fr.isen.gomez.untilfailure.viewModel.firstPart.InscriptionViewModel
 
 
 @Composable

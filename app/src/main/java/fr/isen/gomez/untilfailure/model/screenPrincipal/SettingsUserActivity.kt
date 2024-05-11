@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure
+package fr.isen.gomez.untilfailure.model.screenPrincipal
 
 import android.content.Context
 import android.content.Intent
@@ -24,6 +24,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.ui.theme.UntilFailureTheme
 
 class SettingsUserActivity : ComponentActivity() {

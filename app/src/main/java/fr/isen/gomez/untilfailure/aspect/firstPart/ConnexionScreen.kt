@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure.aspect
+package fr.isen.gomez.untilfailure.aspect.firstPart
 
 import android.content.Intent
 import android.widget.Toast
@@ -30,9 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import fr.isen.gomez.untilfailure.SeanceActivity
-import fr.isen.gomez.untilfailure.model.AccueilActivity
-import fr.isen.gomez.untilfailure.viewModel.ConnexionViewModel
+import fr.isen.gomez.untilfailure.model.screenPrincipal.SeanceActivity
+import fr.isen.gomez.untilfailure.viewModel.firstPart.ConnexionViewModel
 
 
 @Composable

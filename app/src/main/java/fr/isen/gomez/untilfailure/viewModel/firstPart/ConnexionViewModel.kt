@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure.viewModel
+package fr.isen.gomez.untilfailure.viewModel.firstPart
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth

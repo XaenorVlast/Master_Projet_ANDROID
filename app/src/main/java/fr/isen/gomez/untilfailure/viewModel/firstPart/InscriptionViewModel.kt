@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure.viewModel
+package fr.isen.gomez.untilfailure.viewModel.firstPart
 
 import android.content.Context
 import android.widget.Toast
