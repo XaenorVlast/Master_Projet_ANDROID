@@ -16,8 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io") // This is how you add JitPack in Kotlin DSL
     }
 }
+
 
 rootProject.name = "UntilFailure"
 include(":app")

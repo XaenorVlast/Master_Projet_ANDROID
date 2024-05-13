@@ -8,3 +8,4 @@ data class User(
     val objectif: String,
     val email: String
 )
+

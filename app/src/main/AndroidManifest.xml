@@ -20,48 +20,33 @@
     tools:targetApi="31">
 
     <activity
-        android:name=".SeanceActivity"
+        android:name=".model.screenPrincipal.EcranPrincipalActivity"
         android:exported="false"
-        android:label="@string/title_activity_seance"
+
         android:theme="@style/Theme.UntilFailure" />
+
     <activity
-        android:name=".ProfileUserActivity"
-        android:exported="false"
-        android:label="@string/title_activity_profile_user"
-        android:theme="@style/Theme.UntilFailure" />
-    <activity
-        android:name=".model.InscriptionActivity"
+        android:name=".model.firstPart.InscriptionActivity"
         android:exported="false"
         android:label="@string/title_activity_inscription"
         android:theme="@style/Theme.UntilFailure" />
+
     <activity
-        android:name=".DataPerformancesActivity"
-        android:exported="false"
-        android:label="@string/title_activity_data_performances"
-        android:theme="@style/Theme.UntilFailure" />
-    <activity
-        android:name=".model.ConnexionActivity"
+        android:name=".model.firstPart.ConnexionActivity"
         android:exported="false"
         android:label="@string/title_activity_connexion"
         android:theme="@style/Theme.UntilFailure" />
-    <activity
-        android:name=".model.AccueilActivity"
-        android:exported="false"
-        android:label="@string/title_activity_accueil"
-        android:theme="@style/Theme.UntilFailure" />
-    <activity
-        android:name=".SettingsUserActivity"
-        android:exported="false"
-        android:theme="@style/Theme.UntilFailure" />
+
+
 
     <meta-data
         android:name="com.google.firebase.database.DEFAULT_URL"
         android:value="https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/" />
 
     <activity
-        android:name=".model.MainActivity"
+        android:name=".model.firstPart.AccueilActivity"
         android:exported="true"
-        android:label="@string/app_name"
+        android:label="@string/title_activity_accueil"
         android:theme="@style/Theme.UntilFailure">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />

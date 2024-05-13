@@ -1,4 +1,4 @@
-package fr.isen.gomez.untilfailure.aspect
+package fr.isen.gomez.untilfailure.aspect.firstPart
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import fr.isen.gomez.untilfailure.R
-import fr.isen.gomez.untilfailure.viewModel.AccueilViewModel
+import fr.isen.gomez.untilfailure.viewModel.firstPart.AccueilViewModel
 
 @Composable
 fun AccueilScreen(viewModel: AccueilViewModel) {
