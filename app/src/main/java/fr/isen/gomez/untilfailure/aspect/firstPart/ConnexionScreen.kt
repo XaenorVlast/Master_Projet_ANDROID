@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import fr.isen.gomez.untilfailure.model.screenPrincipal.SeanceActivity
+import fr.isen.gomez.untilfailure.model.screenPrincipal.EcranPrincipalActivity
 import fr.isen.gomez.untilfailure.viewModel.firstPart.ConnexionViewModel
 
 
@@ -69,7 +69,7 @@ fun ConnexionScreen(viewModel: ConnexionViewModel) {
                 Button(
                     onClick = {
                         viewModel.signIn(email, password, {
-                            context.startActivity(Intent(context, SeanceActivity::class.java))
+                            context.startActivity(Intent(context, EcranPrincipalActivity::class.java))
                         }, { error ->
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         })

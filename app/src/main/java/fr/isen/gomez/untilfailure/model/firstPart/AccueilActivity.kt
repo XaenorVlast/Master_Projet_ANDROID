@@ -16,6 +16,7 @@ class AccueilActivity : ComponentActivity() {
         setContent {
             UntilFailureTheme {
                 AccueilScreen(viewModel)
+
             }
         }
     }

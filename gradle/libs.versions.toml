@@ -12,6 +12,7 @@ firebaseAuthKtx = "23.0.0"
 firebaseDatabaseKtx = "21.0.0"
 coreKtxVersion = "1.5.0"
 firebaseFirestoreKtx = "25.0.0"
+mpandroidchart = "v3.1.0"
 navigationCompose = "2.7.7"
 
 [libraries]
@@ -34,6 +35,8 @@ firebase-database-ktx = { group = "com.google.firebase", name = "firebase-databa
 core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtxVersion" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+mpAndroidChart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mpandroidchart" }
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
