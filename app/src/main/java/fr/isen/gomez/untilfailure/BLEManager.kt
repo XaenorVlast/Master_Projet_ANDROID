@@ -5,6 +5,7 @@ package fr.isen.gomez.untilfailure
 import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.content.Context
+import android.util.Log
 
 object BLEManager {
     private var bluetoothGatt: BluetoothGatt? = null
@@ -35,7 +36,20 @@ object BLEManager {
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             // Callback pour la découverte de services
         }
+
+        @Deprecated("Deprecated in Java")
+        override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
+            characteristic?.let { char ->
+                char.value?.let { value ->
+                    val receivedString = value.toString(Charsets.UTF_8)
+                    Log.d("BLE Notification", "Received data: $receivedString")
+
+                    // Propagate the data if needed, or handle it right here.
+                }
+            }
+        }
     }
+
     fun getGatt(): BluetoothGatt? {
         return bluetoothGatt
     }
