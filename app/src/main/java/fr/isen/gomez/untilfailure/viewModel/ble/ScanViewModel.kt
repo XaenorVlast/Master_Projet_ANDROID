@@ -1,20 +1,24 @@
+package fr.isen.gomez.untilfailure.viewModel.ble
+
 import android.annotation.SuppressLint
 import android.app.Application
-import android.bluetooth.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
-import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import android.content.Context
 
 class ScanViewModel(application: Application) : AndroidViewModel(application) {
     @SuppressLint("StaticFieldLeak")
     private val context = application.applicationContext
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private var bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
+
     private val _isScanning = MutableStateFlow(false)
     val isScanning = _isScanning.asStateFlow()
 
@@ -69,7 +73,11 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
     fun connectToDevice(deviceAddress: String) {
         val device = bluetoothAdapter?.getRemoteDevice(deviceAddress)
         device?.let {
+            stopScan()
             bluetoothGatt = it.connectGatt(context, false, gattCallback)
+
+            // Keep only the device that is being connected
+            _scanResults.value = _scanResults.value.filter { it.device.address == deviceAddress }
         } ?: run {
             _errorMessage.value = "Device not found."
         }

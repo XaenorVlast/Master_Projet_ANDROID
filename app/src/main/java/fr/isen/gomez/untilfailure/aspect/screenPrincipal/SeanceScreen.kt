@@ -1,5 +1,8 @@
 package fr.isen.gomez.untilfailure.aspect.screenPrincipal
 
+import fr.isen.gomez.untilfailure.model.exercice.ExerciceActivity
+import fr.isen.gomez.untilfailure.viewModel.ble.ScanViewModel
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,12 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-
-
-import androidx.compose.foundation.layout.padding
-
-import androidx.compose.ui.Alignment
-
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,30 +22,66 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import fr.isen.gomez.untilfailure.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.isen.gomez.untilfailure.data.Exercise
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SeanceViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 
+
+import android.content.Intent
+
+import androidx.compose.ui.platform.LocalContext
+
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SeanceScreen(viewModel: SeanceViewModel = viewModel()) {
-    val exercises = viewModel.exercises.collectAsState().value
+fun SeanceScreen(
+    seanceViewModel: SeanceViewModel = viewModel(),
+    scanViewModel: ScanViewModel = viewModel()
+) {
+    val exercises = seanceViewModel.exercises.collectAsState().value
+    val isConnected = scanViewModel.connectionState.collectAsState().value
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        SectionTitle(title = "Choose Your Exercise")
-        ExerciseButtons(exercises = exercises, viewModel = viewModel)
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        SectionTitle(title = "Choisissez votre exercice")
+        if (!isConnected) {
+            Text(
+                "Connexion BLE non établie. Veuillez connecter un appareil.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else {
+            ExerciseButtons(
+                exercises = exercises,
+                isConnected = isConnected,
+                onExerciseSelected = { exercise ->
+                    if (isConnected) {
+                        val intent = Intent(context, ExerciceActivity::class.java).apply {
+                            putExtra("EXERCISE_ID", exercise.id) // Assurez-vous que 'id' est une propriété de votre classe Exercise
+                            putExtra("EXERCISE_NAME", exercise.name) // Exemple d'envoi de plus d'info
+                        }
+                        context.startActivity(intent)
+                    }
+                }
+            )
+        }
     }
 }
 
+
 @Composable
-fun ExerciseButtons(exercises: List<Exercise>, viewModel: SeanceViewModel) {
+fun ExerciseButtons(
+    exercises: List<Exercise>,
+    isConnected: Boolean,
+    onExerciseSelected: (Exercise) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxHeight().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.Center,
@@ -56,7 +89,7 @@ fun ExerciseButtons(exercises: List<Exercise>, viewModel: SeanceViewModel) {
     ) {
         exercises.forEach { exercise ->
             ColorButton(
-                onClick = { viewModel.onExerciseSelected(exercise) },
+                onClick = { if (isConnected) onExerciseSelected(exercise) },
                 imageId = exercise.imageId,
                 text = exercise.name,
                 contentColor = MaterialTheme.colorScheme.onBackground
@@ -64,6 +97,8 @@ fun ExerciseButtons(exercises: List<Exercise>, viewModel: SeanceViewModel) {
         }
     }
 }
+
+
 
 
 @Composable

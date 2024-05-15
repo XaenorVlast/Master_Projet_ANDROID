@@ -34,6 +34,12 @@
 
         android:theme="@style/Theme.UntilFailure" />
 
+        <activity
+            android:name=".model.exercice.ExerciceActivity"
+            android:exported="false"
+
+            android:theme="@style/Theme.UntilFailure" />
+
     <activity
         android:name=".model.firstPart.InscriptionActivity"
         android:exported="false"

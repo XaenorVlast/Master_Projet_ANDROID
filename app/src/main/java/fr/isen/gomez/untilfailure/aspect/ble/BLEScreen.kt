@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import fr.isen.gomez.untilfailure.viewModel.ble.ScanViewModel
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -31,11 +32,10 @@ fun BLEScreen(viewModel: ScanViewModel = viewModel()) {
             Text(if (isScanning) "Arrêter le scan" else "Démarrer le scan")
         }
 
-        if (connectionState) {
-            Text("Connected", modifier = Modifier.padding(16.dp))
-        } else {
-            Text("Not Connected", modifier = Modifier.padding(16.dp))
-        }
+        Text(
+            if (connectionState) "Connecté" else "Non connecté",
+            modifier = Modifier.padding(16.dp)
+        )
 
         LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
             items(scanResults) { result ->
