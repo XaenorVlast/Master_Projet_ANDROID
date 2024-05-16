@@ -44,9 +44,14 @@ fun BLEScreen(viewModel: ScanViewModel = viewModel()) {
                     modifier = Modifier
                         .clickable {
                             viewModel.connectToDevice(result.device.address)
+                            viewModel.stopScan()  // Arrête le scan
+                            viewModel.filterResultsForConnectedDevice(result.device.address)  // Filtre les résultats pour ne montrer que l'appareil connecté
                         }
                         .padding(vertical = 8.dp)
                 )
+
+
+
             }
         }
     }

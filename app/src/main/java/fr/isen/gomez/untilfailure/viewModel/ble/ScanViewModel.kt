@@ -29,6 +29,16 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
     private val _connectionState = MutableStateFlow(false)
     val connectionState = _connectionState.asStateFlow()
 
+
+    init {
+        checkBluetoothGattConnection()
+    }
+
+    private fun checkBluetoothGattConnection() {
+        val bluetoothGatt = BLEManager.getGatt() // Supposons que BLEManager a une méthode bleGatt qui retourne un BluetoothGatt?
+        _connectionState.value = bluetoothGatt != null
+    }
+
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.let {
@@ -47,6 +57,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         override fun onScanFailed(errorCode: Int) {
             _errorMessage.value = "Scan failed with error: $errorCode"
         }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -79,4 +90,12 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         BLEManager.disconnect()
         stopScan()
     }
+
+    fun filterResultsForConnectedDevice(address: String) {
+        val connectedDeviceResult = _scanResults.value.find { it.device.address == address }
+        connectedDeviceResult?.let {
+            _scanResults.value = listOf(it)
+        }
+    }
+
 }
