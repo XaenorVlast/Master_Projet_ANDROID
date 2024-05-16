@@ -28,8 +28,5 @@ class SeanceViewModel : ViewModel() {
         }
     }
 
-    fun onExerciseSelected(exercise: Exercise) {
-        // Logique à exécuter quand un exercice est sélectionné, par exemple navigation
-    }
 }
 

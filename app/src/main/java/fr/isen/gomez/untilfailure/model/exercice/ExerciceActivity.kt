@@ -11,17 +11,22 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import fr.isen.gomez.untilfailure.BLEManager
 import fr.isen.gomez.untilfailure.data.ExerciseState
@@ -37,6 +42,9 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private var currentState by mutableStateOf(ExerciseState.AWAITING_START)
     private var validReps = 0
     private var invalidReps = 0
+    private var barWeight by mutableStateOf(0f)  // stocke le poids de la barre en kg
+    private var showWeightDialog by mutableStateOf(false)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,8 +86,14 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     ExerciseState.AWAITING_REFERENCE_VALIDATION -> {
                         Text("Validation de la répétition de référence en cours.", style = MaterialTheme.typography.bodyLarge)
                     }
+
                     ExerciseState.RECORDING_REPETITIONS -> {
                         Text("Enregistrement des répétitions.", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = "Poids de la barre : $barWeight kg",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Blue
+                        )
                         Text("Répétitions valides : $validReps", style = MaterialTheme.typography.bodyLarge, color = Color.Green)
                         Text("Répétitions non valides : $invalidReps", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
                     }
@@ -87,7 +101,20 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                         Text("La séance est terminée.", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
+                // Afficher le dialogue si nécessaire
+                if (showWeightDialog) {
+                    ShowWeightInputDialog { weight ->
+                        barWeight = weight
+                        showWeightDialog = false // Fermer le dialogue après la saisie
 
+                        // Mettre à jour tout traitement nécessaire après la saisie du poids
+                    }
+                }
+
+                // Logique pour afficher ou masquer le dialogue basé sur l'état de l'application
+                if (currentState == ExerciseState.RECORDING_REPETITIONS && barWeight == 0f) {
+                    showWeightDialog = true
+                }
                 // Boutons pour contrôler la séance
                 if (currentState == ExerciseState.AWAITING_START) {
                     Button(
@@ -116,6 +143,50 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             }
         }
     }
+    @Composable
+    fun ShowWeightInputDialog(onWeightEntered: (Float) -> Unit) {
+        val context = LocalContext.current
+        var weightInput by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = {
+                // Fermer le dialogue lorsqu'on clique à l'extérieur ou sur le bouton annuler
+                showWeightDialog = false
+            },
+            title = { Text("Entrer le Poids de la Barre") },
+            text = {
+                TextField(
+                    value = weightInput,
+                    onValueChange = { weightInput = it },
+                    label = { Text("Poids (kg)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        weightInput.toFloatOrNull()?.let {
+                            onWeightEntered(it)
+                            showWeightDialog = false // Fermer le dialogue après la confirmation
+                        } ?: run {
+                            Toast.makeText(context, "Veuillez entrer un nombre valide.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text("Confirmer")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showWeightDialog = false }
+                ) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
+
+
 
     private fun getStateDescription(state: ExerciseState): String {
         return when (state) {
@@ -213,6 +284,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     "repv" -> {
                         // Si la donnée reçue est "repv", maintenir l'état d'enregistrement des répétitions.
                         currentState = ExerciseState.RECORDING_REPETITIONS
+                        barWeight = 0f
                         updateUI()  // Mise à jour de l'interface utilisateur après changement d'état
                     }
                 }
