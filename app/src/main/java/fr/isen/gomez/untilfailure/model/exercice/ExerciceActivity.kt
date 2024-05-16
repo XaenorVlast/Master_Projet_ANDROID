@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import fr.isen.gomez.untilfailure.BLEManager
 import java.util.*
 
-class ExerciceActivity : ComponentActivity() {
+class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private val SERVICE_UUID = UUID.fromString("00000000-cc7a-482a-984a-7f2ed5b3e58f")
     private val CHARACTERISTIC_NOTIFY_UUID1 =
         UUID.fromString("0000abcd-8e22-4541-9d4c-21edae82ed19") // UUID for notifications
@@ -27,8 +27,15 @@ class ExerciceActivity : ComponentActivity() {
         }
 
         setupNotificationListener()
+        BLEManager.notificationListener = this
     }
 
+    override fun onNotificationReceived(characteristic: BluetoothGattCharacteristic) {
+        runOnUiThread {
+            val receivedData = characteristic.value.toString(Charsets.UTF_8)
+            Toast.makeText(this, "Received notification: $receivedData", Toast.LENGTH_SHORT).show()
+        }
+    }
     @Composable
     fun DeviceControlScreen() {
         val context = LocalContext.current
@@ -68,4 +75,5 @@ class ExerciceActivity : ComponentActivity() {
             }
         }
     }
+
 }

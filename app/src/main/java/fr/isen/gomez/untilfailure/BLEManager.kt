@@ -9,6 +9,7 @@ import android.util.Log
 
 object BLEManager {
     private var bluetoothGatt: BluetoothGatt? = null
+    var notificationListener: NotificationListener? = null
 
     @SuppressLint("MissingPermission")
     fun connect(context: Context, address: String, autoConnect: Boolean = false): Boolean {
@@ -43,11 +44,15 @@ object BLEManager {
                 char.value?.let { value ->
                     val receivedString = value.toString(Charsets.UTF_8)
                     Log.d("BLE Notification", "Received data: $receivedString")
-
-                    // Propagate the data if needed, or handle it right here.
+                    notificationListener?.onNotificationReceived(char)
                 }
             }
         }
+
+    }
+    // In BLEManager
+    interface NotificationListener {
+        fun onNotificationReceived(characteristic: BluetoothGattCharacteristic)
     }
 
     fun getGatt(): BluetoothGatt? {
