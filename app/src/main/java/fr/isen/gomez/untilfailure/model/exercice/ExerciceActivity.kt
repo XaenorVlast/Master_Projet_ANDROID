@@ -3,6 +3,7 @@ package fr.isen.gomez.untilfailure.model.exercice
 import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.content.Intent
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -28,6 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.database
 import fr.isen.gomez.untilfailure.BLEManager
 import fr.isen.gomez.untilfailure.data.ExerciseState
 import fr.isen.gomez.untilfailure.model.screenPrincipal.EcranPrincipalActivity
@@ -44,10 +48,19 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private var invalidReps = 0
     private var barWeight by mutableStateOf(0f)  // stocke le poids de la barre en kg
     private var showWeightDialog by mutableStateOf(false)
+    private var seriesCount = 0  // Compteur pour les séries
+    private var userId: String? = null
+    private var workoutId: String? = null
+    private var exerciseName: String? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        exerciseName = intent.getStringExtra("EXERCISE_NAME")
+        userId = FirebaseAuth.getInstance().currentUser?.uid  // Utiliser getUid() pour obtenir l'ID de l'utilisateur
+        if (exerciseName != null) {
+            startNewWorkout(userId!!, exerciseName!!)
+        }
         setContent {
             DeviceControlScreen()
         }
@@ -119,6 +132,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                 if (currentState == ExerciseState.AWAITING_START) {
                     Button(
                         onClick = {
+
                             sendCommandToBLEDevice(0x01)  // Commande pour démarrer la séance
                             currentState = ExerciseState.AWAITING_REFERENCE_CONFIRMATION
                         },
@@ -132,6 +146,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     Button(
                         onClick = {
                             currentState = ExerciseState.SESSION_ENDED
+                            saveSeriesToFirebase(userId!!, workoutId!!, seriesCount)
                             sendCommandToBLEDevice(0x02)  // Envoyer commande pour terminer la séance
                             navigateToMainActivity()  // Naviguer vers l'écran principal après la fin de la séance
                         },
@@ -283,8 +298,14 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     }
                     "repv" -> {
                         // Si la donnée reçue est "repv", maintenir l'état d'enregistrement des répétitions.
+                        saveSeriesToFirebase(userId!!, workoutId!!, seriesCount)
                         currentState = ExerciseState.RECORDING_REPETITIONS
-                        barWeight = 0f
+                        seriesCount++  // Incrémenter le compteur de séries
+
+
+
+
+                        resetSeriesData()
                         updateUI()  // Mise à jour de l'interface utilisateur après changement d'état
                     }
                 }
@@ -313,5 +334,77 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
         startActivity(intent)
         finish()  // Terminez cette activité pour éviter le retour en arrière
     }
+    private fun resetSeriesData() {
+        validReps = 0
+        invalidReps = 0
+        barWeight = 0f  // Supposer que l'utilisateur doit entrer le poids à nouveau si nécessaire
+    }
+
+    private fun saveSeriesToFirebase(userId: String, workoutId: String, seriesNumber: Int) {
+
+        val workoutData = hashMapOf(
+            "valid_reps" to validReps,
+            "invalid_reps" to invalidReps,
+            "weight" to barWeight
+        )
+
+        // Spécifiez ici l'URL de votre Firebase Realtime Database
+        val database = Firebase.database("https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/")
+        val databaseReference = database.reference
+            .child("user")
+            .child(userId)
+            .child("workouts")
+            .child(workoutId)
+            .child("sets")
+            .child("set$seriesNumber")
+
+        databaseReference.setValue(workoutData)
+            .addOnSuccessListener {
+                Log.d("Firebase", "Data saved successfully!")
+            }
+            .addOnFailureListener {
+                Log.d("Firebase", "Failed to save data!")
+            }
+    }
+
+    private fun generateWorkoutId(): String {
+        val dateFormat = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+        return "workout" + dateFormat.format(Date())
+    }
+    private fun startNewWorkout(userId: String, exerciseType: String) {
+        workoutId = generateWorkoutId()  // Générer un ID unique pour la nouvelle séance
+        seriesCount = 0  // Réinitialiser le compteur de séries pour la nouvelle séance
+
+        if (userId == null) {
+            Log.d("Firebase", "No user is logged in.")
+            return
+        }
+
+        val workoutInitData = hashMapOf(
+            "date" to SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+            "type" to exerciseType  // Utilisation du type d'exercice passé en paramètre
+        )
+
+        // Initialisation de la base de données Firebase avec une URL spécifique
+        val database = Firebase.database("https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/")
+        val databaseReference = database.getReference("user")
+            .child(userId)
+            .child("workouts")
+            .child(workoutId!!)
+
+        // Sauvegarde des données dans la base de données
+        databaseReference.setValue(workoutInitData)
+            .addOnSuccessListener {
+                Log.d("Firebase", "Workout session initialized successfully!")
+            }
+            .addOnFailureListener {
+                Log.d("Firebase", "Failed to initialize workout session")
+            }
+    }
+
+
+
+
+
 
 }
