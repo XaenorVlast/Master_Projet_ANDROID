@@ -1,19 +1,24 @@
 package fr.isen.gomez.untilfailure.data
 
+import com.google.firebase.database.IgnoreExtraProperties
 import com.google.firebase.database.PropertyName
 import java.util.Date
 
 // Modèle pour les détails de l'exercice effectué
-data class ExercisePerformed(
-    val exerciseId: String, // Référence à l'ID de l'exercice dans la classe Exercise
-    val weightLifted: Double,
-    val repetitions: Int
+@IgnoreExtraProperties
+data class Workout(
+    val workoutId: String = "",
+    val date: String = "",
+    val type: String = "",
+    val series: List<Series> = emptyList()
 )
 
-// Modèle pour la performance de session, utilisant des références à Exercise
-data class SessionPerformance(
-    @PropertyName("date") val date: Date,
-    @PropertyName("exercisesPerformed") val exercisesPerformed: List<ExercisePerformed>
+@IgnoreExtraProperties
+data class Series(
+    val seriesNumber: Int = 0,
+    val validReps: Int = 0,
+    val invalidReps: Int = 0,
+    val weight: Double = 0.0
 )
 
 // Classe pour décrire les exercices disponibles
