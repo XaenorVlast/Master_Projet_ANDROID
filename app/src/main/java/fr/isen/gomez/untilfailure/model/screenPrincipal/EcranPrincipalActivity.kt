@@ -1,6 +1,8 @@
 package fr.isen.gomez.untilfailure.model.screenPrincipal
 
 import BLEScreen
+import PerformanceScreen
+import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 import fr.isen.gomez.untilfailure.viewModel.ble.ScanViewModel
 import SettingsScreen
 import android.annotation.SuppressLint
@@ -28,10 +30,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.aspect.screenPrincipal.SeanceScreen
-import fr.isen.gomez.untilfailure.aspect.screenPrincipal.performance.PerformanceScreen
 import fr.isen.gomez.untilfailure.model.firstPart.AccueilActivity
 import fr.isen.gomez.untilfailure.viewModel.ble.PermissionsHelper
-import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SettingsViewModel
 class EcranPrincipalActivity : ComponentActivity() {
     private lateinit var permissionsHelper: PermissionsHelper

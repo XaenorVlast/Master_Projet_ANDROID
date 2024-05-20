@@ -7,15 +7,15 @@ import java.util.Date
 // Modèle pour les détails de l'exercice effectué
 @IgnoreExtraProperties
 data class Workout(
-    val workoutId: String = "",
+    var workoutId: String = "",
     val date: String = "",
     val type: String = "",
-    val series: List<Series> = emptyList()
+    var series: List<Series> = emptyList()
 )
 
 @IgnoreExtraProperties
 data class Series(
-    val seriesNumber: Int = 0,
+    var seriesNumber: Int = 0,
     val validReps: Int = 0,
     val invalidReps: Int = 0,
     val weight: Double = 0.0
