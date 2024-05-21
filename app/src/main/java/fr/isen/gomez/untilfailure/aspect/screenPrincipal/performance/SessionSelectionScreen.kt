@@ -25,6 +25,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
 import fr.isen.gomez.untilfailure.data.Series
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 
@@ -49,7 +50,7 @@ fun SessionSelectionScreen(viewModel: PerformanceViewModel, userId: String, exer
         Column(modifier = Modifier.padding(padding)) {
             if (selectedWorkout != null) {
                 Log.d("SessionSelectionScreen", "Displaying selected workout details for ${selectedWorkout!!.workoutId}")
-                WorkoutDetail(selectedWorkout)
+                WorkoutDetail(viewModel, selectedWorkout) // Pass viewModel here
             } else {
                 Log.d("SessionSelectionScreen", "No workout selected, displaying list")
                 LazyColumn {
@@ -70,27 +71,29 @@ fun SessionSelectionScreen(viewModel: PerformanceViewModel, userId: String, exer
                         )
                     }
                 }
-
             }
         }
     }
 }
 
 
+
 @Composable
-fun WorkoutDetail(workout: Workout?) {
+fun WorkoutDetail(viewModel: PerformanceViewModel, workout: Workout?) {
     workout?.let {
-        Log.d("WorkoutDetail", "Showing details for workout ID: ${workout.workoutId}")
         Column {
             Text("Date: ${it.date}", style = MaterialTheme.typography.titleMedium)
             it.series.forEach { series ->
-                // Displaying both valid and invalid reps along with weight for each series
                 Text(
                     "Series ${series.seriesNumber}: ${series.validReps} valid reps, ${series.invalidReps} invalid reps at ${series.weight}kg",
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
             WorkoutSeriesCharts(it.series)
+
+            Button(onClick = { viewModel.deselectWorkout() }) {
+                Text("Return to Workout List")
+            }
         }
     } ?: Log.d("WorkoutDetail", "Workout detail requested but workout is null")
 }
@@ -114,6 +117,7 @@ fun WeightChart(series: List<Series>) {
             factory = { context ->
                 LineChart(context).apply {
                     val entries = series.mapIndexed { index, s ->
+                        Log.d("WeightChart", "Series Index: $index, Weight: ${s.weight}")
                         Entry(index.toFloat(), s.weight.toFloat())
                     }
                     val dataSet = LineDataSet(entries, "Weight").apply {
@@ -135,6 +139,8 @@ fun WeightChart(series: List<Series>) {
                 chart.invalidate()
             }
         )
+    } else {
+        Text("No data available for weights", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -145,6 +151,7 @@ fun RepetitionsChart(series: List<Series>) {
             factory = { context ->
                 LineChart(context).apply {
                     val entries = series.mapIndexed { index, s ->
+                        Log.d("RepetitionsChart", "Series Index: $index, Valid Reps: ${s.validReps}")
                         Entry(index.toFloat(), s.validReps.toFloat())
                     }
                     val dataSet = LineDataSet(entries, "Valid Reps").apply {
@@ -166,5 +173,7 @@ fun RepetitionsChart(series: List<Series>) {
                 chart.invalidate()
             }
         )
+    } else {
+        Text("No data available for repetitions", style = MaterialTheme.typography.bodyLarge)
     }
 }

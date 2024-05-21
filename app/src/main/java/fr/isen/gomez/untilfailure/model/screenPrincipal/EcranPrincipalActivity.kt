@@ -104,8 +104,8 @@ fun BottomNavigationBar(navController: NavController) {
         val currentDestination = navBackStackEntry?.destination
 
         NavigationBarItem(
-            icon = { Image(painter = painterResource(id = R.drawable.home), contentDescription = "Accueil") },
-            label = { Text("Accueil") },
+            icon = { Image(painter = painterResource(id = R.drawable.home), contentDescription = "Comparaison") },
+            label = { Text("Comparaison") },
             selected = currentDestination?.hierarchy?.any { it.route == "performance" } == true,
             onClick = { navController.navigate("performance") }
         )
