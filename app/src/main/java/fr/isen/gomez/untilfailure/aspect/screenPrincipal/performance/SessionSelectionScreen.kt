@@ -22,6 +22,9 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import android.graphics.Color
 import android.util.Log
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import fr.isen.gomez.untilfailure.data.Series
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 
@@ -87,7 +90,7 @@ fun WorkoutDetail(workout: Workout?) {
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-            WorkoutSeriesChart(it.series)
+            WorkoutSeriesCharts(it.series)
         }
     } ?: Log.d("WorkoutDetail", "Workout detail requested but workout is null")
 }
@@ -96,54 +99,72 @@ fun WorkoutDetail(workout: Workout?) {
 
 
 @Composable
-fun WorkoutSeriesChart(series: List<Series>) {
-    Log.d("WorkoutSeriesChart", "Creating chart with ${series.size} series data")
-    if (series.isEmpty()) {
-        Log.d("WorkoutSeriesChart", "No series data available for chart")
-        return
+fun WorkoutSeriesCharts(series: List<Series>) {
+    Column {
+        WeightChart(series)
+        Spacer(modifier = Modifier.height(16.dp)) // Espacer les graphiques
+        RepetitionsChart(series)
     }
-    AndroidView(
-        factory = { context ->
-            LineChart(context).apply {
-                // Prepare entries for weights
-                val weightEntries = series.mapIndexed { index, s ->
-                    Entry(index.toFloat(), s.weight.toFloat()).also {
-                        Log.d("WorkoutSeriesChart", "Weight Entry: Series ${index}, Weight ${s.weight}")
-                    }
-                }
-                // Prepare entries for repetitions
-                val repEntries = series.mapIndexed { index, s ->
-                    Entry(index.toFloat(), s.validReps.toFloat()).also {
-                        Log.d("WorkoutSeriesChart", "Reps Entry: Series ${index}, Reps ${s.validReps}")
-                    }
-                }
+}
 
-                // Configure data sets
-                val weightDataSet = LineDataSet(weightEntries, "Weight").apply {
-                    color = Color.RED
-                    valueTextColor = Color.WHITE
-                    lineWidth = 2.5f
-                    setCircleColor(Color.RED)
+@Composable
+fun WeightChart(series: List<Series>) {
+    if (series.isNotEmpty()) {
+        AndroidView(
+            factory = { context ->
+                LineChart(context).apply {
+                    val entries = series.mapIndexed { index, s ->
+                        Entry(index.toFloat(), s.weight.toFloat())
+                    }
+                    val dataSet = LineDataSet(entries, "Weight").apply {
+                        color = Color.RED
+                        valueTextColor = Color.WHITE
+                        lineWidth = 2.5f
+                        setCircleColor(Color.RED)
+                    }
+                    data = LineData(dataSet)
+                    description.text = "Weight per Series"
+                    xAxis.labelRotationAngle = 0f
                 }
-                val repDataSet = LineDataSet(repEntries, "Valid Reps").apply {
-                    color = Color.BLUE
-                    valueTextColor = Color.WHITE
-                    lineWidth = 2.5f
-                    setCircleColor(Color.BLUE)
-                }
-
-                // Configure and set the line data
-                val lineData = LineData(weightDataSet, repDataSet)
-                data = lineData
-                description.text = "Series Performance"
-                xAxis.labelRotationAngle = 0f
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            update = { chart ->
+                chart.notifyDataSetChanged()
+                chart.invalidate()
             }
-        },
-        update = { chart ->
-            Log.d("WorkoutSeriesChart", "Updating chart display")
-            chart.notifyDataSetChanged() // Ensures data changes are accounted for
-            chart.invalidate()
-        }
+        )
+    }
+}
 
-    )
+@Composable
+fun RepetitionsChart(series: List<Series>) {
+    if (series.isNotEmpty()) {
+        AndroidView(
+            factory = { context ->
+                LineChart(context).apply {
+                    val entries = series.mapIndexed { index, s ->
+                        Entry(index.toFloat(), s.validReps.toFloat())
+                    }
+                    val dataSet = LineDataSet(entries, "Valid Reps").apply {
+                        color = Color.BLUE
+                        valueTextColor = Color.WHITE
+                        lineWidth = 2.5f
+                        setCircleColor(Color.BLUE)
+                    }
+                    data = LineData(dataSet)
+                    description.text = "Valid Reps per Series"
+                    xAxis.labelRotationAngle = 0f
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            update = { chart ->
+                chart.notifyDataSetChanged()
+                chart.invalidate()
+            }
+        )
+    }
 }
