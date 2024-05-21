@@ -146,5 +146,7 @@ class PerformanceViewModel : ViewModel() {
             null
         }
     }
-
+    fun clearComparisonWorkouts() {
+        _comparisonWorkouts.value = null to null
+    }
 }

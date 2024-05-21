@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,6 +38,12 @@ import com.github.mikephil.charting.components.YAxis
 
 @Composable
 fun PerformanceGraphScreen(viewModel: PerformanceViewModel, userId: String, workoutType: String) {
+    // Réinitialiser les sélections de comparaison chaque fois que workoutType change
+    LaunchedEffect(workoutType) {
+        viewModel.clearComparisonWorkouts()
+        Log.d("PerformanceGraphScreen", "Cleared comparison workouts")
+    }
+
     val comparisonWorkouts by viewModel.comparisonWorkouts.collectAsState()
 
     // Log when Composable is recomposed and what the current state of comparisonWorkouts is
@@ -48,14 +55,17 @@ fun PerformanceGraphScreen(viewModel: PerformanceViewModel, userId: String, work
     // Display comparison charts when both workouts are selected
     comparisonWorkouts.first?.let { firstWorkout ->
         comparisonWorkouts.second?.let { secondWorkout ->
-            Log.d("PerformanceGraphScreen", "Displaying comparison charts for workouts.")
-            Column {
-                Text("Comparison of Workouts", style = MaterialTheme.typography.headlineMedium)
-                WorkoutComparisonCharts(firstWorkout.series, secondWorkout.series)
+            if (firstWorkout != null && secondWorkout != null) {
+                Log.d("PerformanceGraphScreen", "Displaying comparison charts for workouts.")
+                Column {
+                    Text("Comparison of Workouts", style = MaterialTheme.typography.headlineMedium)
+                    WorkoutComparisonCharts(firstWorkout.series, secondWorkout.series)
+                }
             }
         }
     }
 }
+
 @Composable
 fun WorkoutSelectionUI(viewModel: PerformanceViewModel, userId: String, workoutType: String) {
     val workouts by viewModel.workouts.collectAsState()

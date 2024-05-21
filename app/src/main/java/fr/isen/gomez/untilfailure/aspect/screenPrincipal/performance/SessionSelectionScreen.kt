@@ -32,9 +32,11 @@ import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSelectionScreen(viewModel: PerformanceViewModel, userId: String, exerciseType: String) {
+    // Ajout d'une clé dans LaunchedEffect pour réinitialiser l'état chaque fois que l'écran est rappelé
     LaunchedEffect(exerciseType) {
         Log.d("SessionSelectionScreen", "Loading workouts for type: $exerciseType")
         viewModel.loadWorkoutsByType(userId, exerciseType)
+        viewModel.deselectWorkout()  // Ajoute cette ligne pour réinitialiser la sélection
     }
 
     val workouts by viewModel.workouts.collectAsState()
@@ -75,6 +77,7 @@ fun SessionSelectionScreen(viewModel: PerformanceViewModel, userId: String, exer
         }
     }
 }
+
 
 
 
