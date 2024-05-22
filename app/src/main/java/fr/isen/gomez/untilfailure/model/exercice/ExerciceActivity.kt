@@ -5,6 +5,7 @@ import android.bluetooth.*
 import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -35,6 +36,8 @@ import com.google.firebase.database.database
 import fr.isen.gomez.untilfailure.BLEManager
 import fr.isen.gomez.untilfailure.data.ExerciseState
 import fr.isen.gomez.untilfailure.model.screenPrincipal.EcranPrincipalActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.*
 
 class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
@@ -52,6 +55,13 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private var userId: String? = null
     private var workoutId: String? = null
     private var exerciseName: String? = null
+    private var timerValue by mutableStateOf(0)  // Temps restant sur le minuteur
+    private var showTimerSetup by mutableStateOf(false)
+    private var showTimerDialog by mutableStateOf(false)
+    private var countdownTimer: CountDownTimer? = null
+    private var lastReceivedCommand: String? = null
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,6 +97,25 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.Black
                 )
+                if (showWeightDialog) {
+                    ShowWeightInputDialog { weight ->
+                        barWeight = weight
+                        showWeightDialog = false // Fermer le dialogue après la saisie
+
+                        // Activer la configuration du minuteur uniquement si ce n'est pas la première série
+                        if (seriesCount > 0) {
+                            showTimerSetup = true  // Préparer à afficher le dialogue du minuteur
+                        }
+                    }
+                }
+
+                // Afficher le dialogue pour le minuteur si nécessaire et si ce n'est pas la première série
+                if (showTimerSetup) {
+                    ShowTimerInputDialog { duration ->
+                        startTimer(duration)
+                        showTimerSetup = false  // Fermer le dialogue après la saisie
+                    }
+                }
 
                 // Affichage conditionnel des informations selon l'état
                 when (currentState) {
@@ -114,19 +143,21 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                         Text("La séance est terminée.", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
-                // Afficher le dialogue si nécessaire
-                if (showWeightDialog) {
-                    ShowWeightInputDialog { weight ->
-                        barWeight = weight
-                        showWeightDialog = false // Fermer le dialogue après la saisie
 
-                        // Mettre à jour tout traitement nécessaire après la saisie du poids
-                    }
-                }
 
                 // Logique pour afficher ou masquer le dialogue basé sur l'état de l'application
                 if (currentState == ExerciseState.RECORDING_REPETITIONS && barWeight == 0f) {
+                    if (showTimerDialog) {
+                        ShowTimerInputDialog { duration ->
+                            startTimer(duration)
+                            showTimerDialog = false  // Fermer le dialogue après la saisie
+
+                        }
+                    }
                     showWeightDialog = true
+                }
+                if (currentState == ExerciseState.RECORDING_REPETITIONS && timerValue > 0) {
+                    Text("Temps restant : $timerValue secondes", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
                 }
                 // Boutons pour contrôler la séance
                 if (currentState == ExerciseState.AWAITING_START) {
@@ -140,24 +171,102 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     ) {
                         Text("Commencer séance")
                     }
+
+
                 }
 
                 if (currentState != ExerciseState.SESSION_ENDED) {
                     Button(
                         onClick = {
-                            currentState = ExerciseState.SESSION_ENDED
-                            saveSeriesToFirebase(userId!!, workoutId!!, seriesCount)
-                            sendCommandToBLEDevice(0x02)  // Envoyer commande pour terminer la séance
-                            navigateToMainActivity()  // Naviguer vers l'écran principal après la fin de la séance
+                            endSession()
                         },
                         modifier = Modifier.padding(PaddingValues(top = 8.dp))
                     ) {
                         Text("Terminer séance")
                     }
                 }
+                if (currentState == ExerciseState.SESSION_ENDED) {
+                    lastReceivedCommand = null  // Réinitialiser lorsque la séance est terminée
+                }
+
             }
         }
     }
+    private fun endSession() {
+        currentState = ExerciseState.SESSION_ENDED
+        showTimerSetup = false // Assurez-vous que le setup du timer est désactivé
+        showWeightDialog = false // Assurez-vous que le dialogue du poids est également fermé
+        showTimerDialog = false // Assurez-vous que tout dialogue de timer est fermé
+
+        saveSeriesToFirebase(userId!!, workoutId!!, seriesCount)
+        sendCommandToBLEDevice(0x02)  // Envoyer commande pour terminer la séance
+        navigateToMainActivity()  // Naviguer vers l'écran principal après la fin de la séance
+        updateUI()  // Mettre à jour l'UI après toutes les modifications d'état
+    }
+
+
+    @Composable
+    fun ShowTimerInputDialog(onTimerDurationEntered: (Int) -> Unit) {
+        val context = LocalContext.current
+        var timerInput by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = {
+                // Optionnel : vous pouvez aussi appeler endSession() ici si vous voulez que la séance se termine lorsque le dialogue est fermé de manière externe.
+            },
+            title = { Text("Définir la durée du minuteur") },
+            text = {
+                TextField(
+                    value = timerInput,
+                    onValueChange = { timerInput = it },
+                    label = { Text("Durée (secondes)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        timerInput.toIntOrNull()?.let {
+                            onTimerDurationEntered(it)
+                            // Fermer le dialogue après la confirmation
+                        } ?: run {
+                            Toast.makeText(context, "Veuillez entrer un nombre valide.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text("Démarrer le minuteur")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        // Appeler endSession() lorsque le bouton "Annuler" est cliqué
+                        showTimerDialog=false
+                    }
+                ) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
+
+
+    private fun startTimer(duration: Int) {
+        countdownTimer?.cancel() // Annuler le minuteur précédent s'il est en cours
+        countdownTimer = object : CountDownTimer((duration * 1000).toLong(), 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                timerValue = (millisUntilFinished / 1000).toInt()
+                updateUI()  // Met à jour l'interface utilisateur avec le temps restant
+            }
+
+            override fun onFinish() {
+                timerValue = 0
+                updateUI()
+            }
+        }.start()
+    }
+
+
     @Composable
     fun ShowWeightInputDialog(onWeightEntered: (Float) -> Unit) {
         val context = LocalContext.current
@@ -193,7 +302,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             },
             dismissButton = {
                 Button(
-                    onClick = { showWeightDialog = false }
+                    onClick = {endSession()}
                 ) {
                     Text("Annuler")
                 }
@@ -249,6 +358,15 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private fun handleStateTransition(receivedData: String) {
         Log.d("BLE handleStateTransition", "Received data: $receivedData")
         Log.d("ExerciseActivity", "Current state updated to: $currentState")
+        // Si la commande reçue est 'repv' et identique à la dernière commande, ignorer cette réception
+        // Vérifier si la commande est une répétition de 'repv' et doit être ignorée
+        if (receivedData == "repv" && lastReceivedCommand == "repv") {
+            Log.d("ExerciseActivity", "Ignoring repeated 'repv' command.")
+            return  // Ignorer cette commande
+        } else {
+            // Mettre à jour la dernière commande reçue si ce n'est pas une répétition à ignorer
+            lastReceivedCommand = receivedData
+        }
 
         when (currentState) {
 
@@ -286,27 +404,21 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             // Si l'état actuel est enregistrement des répétitions, traiter les données reçues pour compter les répétitions valides ou non valides.
             ExerciseState.RECORDING_REPETITIONS -> {
                 when (receivedData) {
-                    "ahah" -> {
-                        // Incrémenter le compteur de répétitions valides.
-                        validReps++
-                        updateUI()  // Mise à jour de l'interface utilisateur pour afficher le nouveau compteur
-                    }
-                    "ihih" -> {
-                        // Incrémenter le compteur de répétitions non valides.
-                        invalidReps++
-                        updateUI()  // Mise à jour de l'interface utilisateur pour afficher le nouveau compteur
+                    "ahah", "ihih" -> {
+                        if (receivedData == "ahah") validReps++
+                        else invalidReps++
+
+                        if (timerValue > 0) {
+                            countdownTimer?.cancel()
+                            timerValue = 0
+                        }
+                        updateUI()
                     }
                     "repv" -> {
-                        // Si la donnée reçue est "repv", maintenir l'état d'enregistrement des répétitions.
                         saveSeriesToFirebase(userId!!, workoutId!!, seriesCount)
-                        currentState = ExerciseState.RECORDING_REPETITIONS
-                        seriesCount++  // Incrémenter le compteur de séries
-
-
-
-
+                        seriesCount++
                         resetSeriesData()
-                        updateUI()  // Mise à jour de l'interface utilisateur après changement d'état
+                        updateUI()
                     }
                 }
             }
