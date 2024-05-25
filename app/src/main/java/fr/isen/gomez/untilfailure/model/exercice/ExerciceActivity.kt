@@ -8,10 +8,12 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -30,15 +32,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.database
 import fr.isen.gomez.untilfailure.BLEManager
 import fr.isen.gomez.untilfailure.data.ExerciseState
+import fr.isen.gomez.untilfailure.data.SessionMode
 import fr.isen.gomez.untilfailure.model.screenPrincipal.EcranPrincipalActivity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import java.util.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private val SERVICE_UUID = UUID.fromString("00000000-cc7a-482a-984a-7f2ed5b3e58f")
@@ -60,23 +63,51 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private var showTimerDialog by mutableStateOf(false)
     private var countdownTimer: CountDownTimer? = null
     private var lastReceivedCommand: String? = null
-
+    private var currentSessionMode by mutableStateOf(SessionMode.NON_GUIDED)
+    private var currentObjective: String = "Default Objective"
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Récupérer les informations nécessaires de l'intent
         exerciseName = intent.getStringExtra("EXERCISE_NAME")
-        userId = FirebaseAuth.getInstance().currentUser?.uid  // Utiliser getUid() pour obtenir l'ID de l'utilisateur
-        if (exerciseName != null) {
+        userId = FirebaseAuth.getInstance().currentUser?.uid
+
+        // Démarrer une nouvelle séance d'entraînement si le nom de l'exercice est fourni
+        if (exerciseName != null && userId != null) {
             startNewWorkout(userId!!, exerciseName!!)
         }
-        setContent {
-            DeviceControlScreen()
-        }
 
+        // Configurer l'écoute des notifications Bluetooth
         setupNotificationListener()
         BLEManager.notificationListener = this
+
+        fetchUserObjective { objective ->
+            currentObjective = objective
+            // Vous pouvez ici mettre à jour l'interface utilisateur ou initialiser des fragments avec cet objectif.
+        }
+        // Définir le contenu de l'UI avec une sélection initiale du mode de session
+        setContent {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Choisir le mode de session", style = MaterialTheme.typography.bodyLarge)
+                    Button(onClick = {
+                        currentSessionMode = SessionMode.GUIDED
+                        updateUI() // Appel pour rafraîchir l'UI après la sélection
+                    }) {
+                        Text("Session Guidée")
+                    }
+                    Button(onClick = {
+                        currentSessionMode = SessionMode.NON_GUIDED
+                        updateUI() // Appel pour rafraîchir l'UI après la sélection
+                    }) {
+                        Text("Session Non Guidée")
+                    }
+                }
+            }
+        }
     }
 
     override fun onNotificationReceived(characteristic: BluetoothGattCharacteristic) {
@@ -86,9 +117,74 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
         }
     }
 
-
     @Composable
     fun DeviceControlScreen() {
+        Surface(modifier = Modifier.padding(all = 16.dp), color = MaterialTheme.colorScheme.background) {
+            Column {
+                when (currentSessionMode) {
+                    SessionMode.GUIDED -> GuidedSessionUI(exerciseName)
+                    SessionMode.NON_GUIDED -> NonGuidedSessionUI()
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ExerciseVideo(exerciseName: String?) {
+        when (exerciseName) {
+            "squat" -> VideoPlayer(videoUrl = "url_to_squat_video")
+            "bench" -> VideoPlayer(videoUrl = "url_to_bench_video")
+            "deadlift" -> VideoPlayer(videoUrl = "url_to_deadlift_video")
+            else -> Text("Pas de vidéo disponible pour cet exercice.")
+        }
+    }
+
+    @Composable
+    fun VideoPlayer(videoUrl: String) {
+        AndroidView(factory = { context ->
+            // Utilisez votre lecteur vidéo ici; par exemple, intégrez un VideoView ou un lecteur externe
+            VideoView(context).apply {
+                setVideoPath(videoUrl)
+                start()
+            }
+        })
+    }
+
+    // Fonction pour récupérer l'objectif de l'utilisateur
+    private fun fetchUserObjective(onResult: (String) -> Unit) {
+        val auth = FirebaseAuth.getInstance()
+        val database = FirebaseDatabase.getInstance("https://untilfailure-ca9de-default-rtdb.europe-west1.firebasedatabase.app/")
+        val usersRef = database.getReference("user")
+
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            usersRef.child(currentUser.uid).child("objectif").get().addOnSuccessListener { snapshot ->
+                val objective = snapshot.value?.toString() ?: "Default Objective"
+                onResult(objective)
+            }.addOnFailureListener {
+                // Gérer l'erreur si nécessaire, par exemple en retournant une valeur par défaut ou en loggant l'erreur
+                onResult("Default Objective")
+            }
+        } else {
+            // Gérer le cas où l'utilisateur n'est pas connecté ou l'UID n'est pas disponible
+            onResult("Default Objective")
+        }
+    }
+
+    @Composable
+    fun GuidedSessionUI(exerciseName: String?){
+        var recommendedReps by remember { mutableStateOf(0) } // Nombre de répétitions recommandées
+
+        // Déterminer le nombre de répétitions en fonction de l'objectif et du numéro de la série
+        recommendedReps = when (currentObjective) {
+            "Force" -> {
+                if (seriesCount == 0 || seriesCount == 1) 5 else 3
+            }
+            "Haltérophilie" -> {
+                if (seriesCount == 0 || seriesCount == 1) 10 else 8
+            }
+            else -> 0 // Cas par défaut si aucun objectif n'est défini
+        }
         Surface(modifier = Modifier.padding(all = 16.dp), color = MaterialTheme.colorScheme.background) {
             Column {
                 // Afficher la description de l'état actuel
@@ -98,15 +194,136 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     color = Color.Black
                 )
                 if (showWeightDialog) {
-                    ShowWeightInputDialog { weight ->
-                        barWeight = weight
-                        showWeightDialog = false // Fermer le dialogue après la saisie
+                    ShowWeightInputDialog(
+                        onWeightEntered = { weight ->
+                            barWeight = weight
+                            showWeightDialog = false  // Fermer le dialogue après la saisie
 
-                        // Activer la configuration du minuteur uniquement si ce n'est pas la première série
-                        if (seriesCount > 0) {
-                            showTimerSetup = true  // Préparer à afficher le dialogue du minuteur
+                            // Activer la configuration du minuteur uniquement si ce n'est pas la première série
+                            if (seriesCount > 0) {
+                                showTimerSetup = true  // Préparer à afficher le dialogue du minuteur
+                            }
+                        },
+                        sessionMode = currentSessionMode,
+                        objective = currentObjective,
+                        seriesCount = seriesCount
+                    )
+                }
+
+                // Afficher le dialogue pour le minuteur si nécessaire et si ce n'est pas la première série
+                if (showTimerSetup) {
+                    ShowTimerInputDialog { duration ->
+                        startTimer(duration)
+                        showTimerSetup = false  // Fermer le dialogue après la saisie
+                    }
+                }
+
+                // Affichage conditionnel des informations selon l'état
+                when (currentState) {
+                    ExerciseState.AWAITING_START -> {
+                        Text("Prêt à commencer la séance.", style = MaterialTheme.typography.bodyLarge)
+                    }
+                    ExerciseState.AWAITING_REFERENCE_CONFIRMATION -> {
+                        Text("En attente de la confirmation de la répétition de référence.", style = MaterialTheme.typography.bodyLarge)
+                        ExerciseVideo(exerciseName)
+                        Text("Suivez les conseils dans la vidéo pour réaliser votre répétition de référence.", style = MaterialTheme.typography.bodyLarge)
+                    }
+                    ExerciseState.AWAITING_REFERENCE_VALIDATION -> {
+                        Text("Validation de la répétition de référence en cours.", style = MaterialTheme.typography.bodyLarge)
+                        ExerciseVideo(exerciseName)
+                        Text("Suivez les conseils dans la vidéo pour réaliser la validation de la répétition de référence.", style = MaterialTheme.typography.bodyLarge)
+                    }
+
+                    ExerciseState.RECORDING_REPETITIONS -> {
+                        Text("Enregistrement des répétitions.", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = "Poids de la barre : $barWeight kg",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Blue
+                        )
+                        Text("Répétitions valides : $validReps", style = MaterialTheme.typography.bodyLarge, color = Color.Green)
+                        Text("Répétitions non valides : $invalidReps", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
+                        Text("Répétitions recommandées : $recommendedReps", style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
+                    }
+
+                    ExerciseState.SESSION_ENDED -> {
+                        Text("La séance est terminée.", style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+
+
+                // Logique pour afficher ou masquer le dialogue basé sur l'état de l'application
+                if (currentState == ExerciseState.RECORDING_REPETITIONS && barWeight == 0f) {
+                    if (showTimerDialog) {
+                        ShowTimerInputDialog { duration ->
+                            startTimer(duration)
+                            showTimerDialog = false  // Fermer le dialogue après la saisie
+
                         }
                     }
+                    showWeightDialog = true
+                }
+                if (currentState == ExerciseState.RECORDING_REPETITIONS && timerValue > 0) {
+                    Text("Temps restant : $timerValue secondes", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
+                }
+                // Boutons pour contrôler la séance
+                if (currentState == ExerciseState.AWAITING_START) {
+                    Button(
+                        onClick = {
+
+                            sendCommandToBLEDevice(0x01)  // Commande pour démarrer la séance
+                            currentState = ExerciseState.AWAITING_REFERENCE_CONFIRMATION
+                        },
+                        modifier = Modifier.padding(PaddingValues(top = 16.dp))
+                    ) {
+                        Text("Commencer séance")
+                    }
+
+
+                }
+
+                if (currentState != ExerciseState.SESSION_ENDED) {
+                    Button(
+                        onClick = {
+                            endSession()
+                        },
+                        modifier = Modifier.padding(PaddingValues(top = 8.dp))
+                    ) {
+                        Text("Terminer séance")
+                    }
+                }
+                if (currentState == ExerciseState.SESSION_ENDED) {
+                    lastReceivedCommand = null  // Réinitialiser lorsque la séance est terminée
+                }
+
+            }
+        }
+    }
+    @Composable
+    fun NonGuidedSessionUI() {
+        Surface(modifier = Modifier.padding(all = 16.dp), color = MaterialTheme.colorScheme.background) {
+            Column {
+                // Afficher la description de l'état actuel
+                Text(
+                    text = "État actuel : ${getStateDescription(currentState)}",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Black
+                )
+                if (showWeightDialog) {
+                    ShowWeightInputDialog(
+                        onWeightEntered = { weight ->
+                            barWeight = weight
+                            showWeightDialog = false  // Fermer le dialogue après la saisie
+
+                            // Activer la configuration du minuteur uniquement si ce n'est pas la première série
+                            if (seriesCount > 0) {
+                                showTimerSetup = true  // Préparer à afficher le dialogue du minuteur
+                            }
+                        },
+                        sessionMode = currentSessionMode,
+                        objective = currentObjective,
+                        seriesCount = seriesCount
+                    )
                 }
 
                 // Afficher le dialogue pour le minuteur si nécessaire et si ce n'est pas la première série
@@ -192,6 +409,8 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             }
         }
     }
+
+
     private fun endSession() {
         currentState = ExerciseState.SESSION_ENDED
         showTimerSetup = false // Assurez-vous que le setup du timer est désactivé
@@ -208,46 +427,62 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     @Composable
     fun ShowTimerInputDialog(onTimerDurationEntered: (Int) -> Unit) {
         val context = LocalContext.current
-        var timerInput by remember { mutableStateOf("") }
-
-        AlertDialog(
-            onDismissRequest = {
-                // Optionnel : vous pouvez aussi appeler endSession() ici si vous voulez que la séance se termine lorsque le dialogue est fermé de manière externe.
-            },
-            title = { Text("Définir la durée du minuteur") },
-            text = {
-                TextField(
-                    value = timerInput,
-                    onValueChange = { timerInput = it },
-                    label = { Text("Durée (secondes)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        timerInput.toIntOrNull()?.let {
-                            onTimerDurationEntered(it)
-                            // Fermer le dialogue après la confirmation
-                        } ?: run {
-                            Toast.makeText(context, "Veuillez entrer un nombre valide.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                ) {
-                    Text("Démarrer le minuteur")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        // Appeler endSession() lorsque le bouton "Annuler" est cliqué
-                        showTimerDialog=false
-                    }
-                ) {
-                    Text("Annuler")
-                }
+        if (currentSessionMode == SessionMode.GUIDED) {
+            // Définir la durée prédéfinie en fonction de l'objectif
+            val presetDuration = when (currentObjective) {
+                "Force" -> 300  // 5 minutes
+                "Haltérophilie" -> 120  // 2 minutes
+                else -> 180  // Autre cas, par défaut à 3 minutes
             }
-        )
+
+            // Appel immédiat du callback avec la durée prédéfinie
+            onTimerDurationEntered(presetDuration)
+        } else {
+            var timerInput by remember { mutableStateOf("") }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // Optionnel : vous pouvez aussi appeler endSession() ici si vous voulez que la séance se termine lorsque le dialogue est fermé de manière externe.
+                },
+                title = { Text("Définir la durée du minuteur") },
+                text = {
+                    TextField(
+                        value = timerInput,
+                        onValueChange = { timerInput = it },
+                        label = { Text("Durée (secondes)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            timerInput.toIntOrNull()?.let {
+                                onTimerDurationEntered(it)
+                                // Fermer le dialogue après la confirmation
+                            } ?: run {
+                                Toast.makeText(
+                                    context,
+                                    "Veuillez entrer un nombre valide.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    ) {
+                        Text("Démarrer le minuteur")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            // Appeler endSession() lorsque le bouton "Annuler" est cliqué
+                            showTimerDialog = false
+                        }
+                    ) {
+                        Text("Annuler")
+                    }
+                }
+            )
+        }
     }
 
 
@@ -268,9 +503,27 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
 
 
     @Composable
-    fun ShowWeightInputDialog(onWeightEntered: (Float) -> Unit) {
+    fun ShowWeightInputDialog(onWeightEntered: (Float) -> Unit, sessionMode: SessionMode, objective: String, seriesCount: Int) {
         val context = LocalContext.current
         var weightInput by remember { mutableStateOf("") }
+        var guidanceText = remember { mutableStateOf("") }
+
+        // Calculer le texte de guidage en fonction du mode de session, de l'objectif et du nombre de séries
+        if (sessionMode == SessionMode.GUIDED) {
+            guidanceText.value = when (objective) {
+                "Haltérophilie" -> when (seriesCount) {
+                    0 -> "Sélectionner un poids à 50% de votre charge max pour la première série."
+                    1 -> "Sélectionner un poids à 60% de votre charge max pour la deuxième série."
+                    else -> "Sélectionner un poids à 65% de votre charge max pour les autres séries."
+                }
+                "Force" -> when (seriesCount) {
+                    0 -> "Commencez avec 65% de votre charge max pour la première série."
+                    in 1..4 -> "Augmentez progressivement jusqu'à 85% de votre charge max pour les séries suivantes."
+                    else -> "Maintenez 85% de votre charge max."
+                }
+                else -> "Entrez le poids désiré (kg)."
+            }
+        }
 
         AlertDialog(
             onDismissRequest = {
@@ -279,12 +532,17 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             },
             title = { Text("Entrer le Poids de la Barre") },
             text = {
-                TextField(
-                    value = weightInput,
-                    onValueChange = { weightInput = it },
-                    label = { Text("Poids (kg)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
+                Column {
+                    if (sessionMode == SessionMode.GUIDED) {
+                        Text(guidanceText.value, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    TextField(
+                        value = weightInput,
+                        onValueChange = { weightInput = it },
+                        label = { Text("Poids (kg)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
             },
             confirmButton = {
                 Button(
@@ -302,13 +560,14 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             },
             dismissButton = {
                 Button(
-                    onClick = {endSession()}
+                    onClick = { endSession() }
                 ) {
                     Text("Annuler")
                 }
             }
         )
     }
+
 
 
 
@@ -360,7 +619,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
         Log.d("ExerciseActivity", "Current state updated to: $currentState")
         // Si la commande reçue est 'repv' et identique à la dernière commande, ignorer cette réception
         // Vérifier si la commande est une répétition de 'repv' et doit être ignorée
-        if (receivedData == "repv" && lastReceivedCommand == "repv") {
+        if (receivedData == "repv" && lastReceivedCommand == "repv" || receivedData == "repv" && validReps ==0 && invalidReps == 0) {
             Log.d("ExerciseActivity", "Ignoring repeated 'repv' command.")
             return  // Ignorer cette commande
         } else {
