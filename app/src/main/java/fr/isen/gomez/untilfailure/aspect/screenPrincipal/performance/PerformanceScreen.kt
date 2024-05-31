@@ -1,9 +1,12 @@
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -15,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
+import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.aspect.screenPrincipal.performance.PerformanceGraphScreen
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 
@@ -65,7 +69,7 @@ fun DataPerformancesScreen(viewModel: PerformanceViewModel, userId: String, exer
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.White,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
@@ -100,7 +104,34 @@ fun ExerciseTypeSelectionScreen(navController: NavHostController, viewModel: Per
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .background(Color.White)
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp), // Adjust padding as needed
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End // Adjust to end to push the icon to the right
+        ) {
+            Spacer(Modifier.weight(3f))
+            Image(
+                painter = painterResource(id = R.drawable.ic_star), // Placeholder for your star icon
+                contentDescription = "Star",
+                modifier = Modifier
+                    //.align(Alignment.CenterHorizontally)
+                    .padding(bottom = 16.dp)
+                    .size(48.dp)
+            )
+            Spacer(Modifier.weight(1f))
+        }
+        Image(
+            painter = painterResource(id = R.drawable.ic_arrow_up), // Placeholder for your arrow graphic
+            contentDescription = "Performance Increase",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 24.dp)
+                .size(100.dp)
+        )
         Text(
             "Prêt à battre vos records ? Sélectionnez une discipline.",
             style = TextStyle(color = Color.Red, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),

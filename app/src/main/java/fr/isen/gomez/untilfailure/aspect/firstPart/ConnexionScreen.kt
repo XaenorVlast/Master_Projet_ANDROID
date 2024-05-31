@@ -1,9 +1,12 @@
 package fr.isen.gomez.untilfailure.aspect.firstPart
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,15 +28,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.model.screenPrincipal.EcranPrincipalActivity
 import fr.isen.gomez.untilfailure.viewModel.firstPart.ConnexionViewModel
 
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ConnexionScreen(viewModel: ConnexionViewModel) {
     var email by remember { mutableStateOf("") }
@@ -41,23 +50,40 @@ fun ConnexionScreen(viewModel: ConnexionViewModel) {
     val context = LocalContext.current
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        content = { padding ->
+        containerColor = Color.Black,
+        content = { //padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .background(Color.Red)  // Adaptez la couleur selon votre thème
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    //.padding(padding)
+                    .background(Color.Black) , // Adaptez la couleur selon votre thème
+                    //.padding(32.dp),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Connexion",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
+                Image(
+                    painter = painterResource(id = R.drawable.connexion_image),
+                    contentDescription = "Connexion Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
                 )
 
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black), startY = 100f)),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Text(
+                        text = "Connexion",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedInput(value = email, onValueChange = { email = it }, label = "Email")
@@ -75,9 +101,9 @@ fun ConnexionScreen(viewModel: ConnexionViewModel) {
                         })
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF0000))
                 ) {
-                    Text("Se connecter")
+                    Text("Se connecter", color = Color.White, fontSize = 18.sp)
                 }
             }
         }
@@ -95,8 +121,8 @@ fun OutlinedInput(value: String, onValueChange: (String) -> Unit, label: String,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         colors = TextFieldDefaults.outlinedTextFieldColors(
             containerColor = Color.White, // Arrière-plan blanc
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.secondary
+            focusedBorderColor = Color.Red,
+            unfocusedBorderColor = Color.LightGray
         )
     )
 }
