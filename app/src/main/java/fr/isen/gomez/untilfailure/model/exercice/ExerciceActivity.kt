@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.MutableLiveData
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import fr.isen.gomez.untilfailure.BLEManager
@@ -65,6 +66,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private var lastReceivedCommand: String? = null
     private var currentSessionMode by mutableStateOf(SessionMode.NON_GUIDED)
     private var currentObjective: String = "Default Objective"
+    private var feedbackMessage by mutableStateOf("")
 
 
 
@@ -244,6 +246,9 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                         Text("Répétitions valides : $validReps", style = MaterialTheme.typography.bodyLarge, color = Color.Green)
                         Text("Répétitions non valides : $invalidReps", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
                         Text("Répétitions recommandées : $recommendedReps", style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
+                        if (feedbackMessage.isNotEmpty() && exerciseName=="Bench") {
+                            Text(feedbackMessage, style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
+                        }
                     }
 
                     ExerciseState.SESSION_ENDED -> {
@@ -301,6 +306,8 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     }
     @Composable
     fun NonGuidedSessionUI() {
+
+
         Surface(modifier = Modifier.padding(all = 16.dp), color = MaterialTheme.colorScheme.background) {
             Column {
                 // Afficher la description de l'état actuel
@@ -355,6 +362,9 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                         )
                         Text("Répétitions valides : $validReps", style = MaterialTheme.typography.bodyLarge, color = Color.Green)
                         Text("Répétitions non valides : $invalidReps", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
+                        if (feedbackMessage.isNotEmpty() && exerciseName=="Bench") {
+                            Text(feedbackMessage, style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
+                        }
                     }
                     ExerciseState.SESSION_ENDED -> {
                         Text("La séance est terminée.", style = MaterialTheme.typography.bodyLarge)
@@ -663,15 +673,13 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             // Si l'état actuel est enregistrement des répétitions, traiter les données reçues pour compter les répétitions valides ou non valides.
             ExerciseState.RECORDING_REPETITIONS -> {
                 when (receivedData) {
-                    "ahah", "ihih" -> {
-                        if (receivedData == "ahah") validReps++
-                        else invalidReps++
-
-                        if (timerValue > 0) {
-                            countdownTimer?.cancel()
-                            timerValue = 0
-                        }
-                        updateUI()
+                    "Gval", "Dval", "Cval" -> {
+                        validReps++  // Incrémenter le compteur de répétitions valides
+                        handleArmDetails(receivedData)  // Gérer les détails spécifiques des bras
+                    }
+                    "Gnva", "Dnva", "Cnva" -> {
+                        invalidReps++  // Incrémenter le compteur de répétitions invalides
+                        handleArmDetails(receivedData)  // Gérer les détails spécifiques des bras
                     }
                     "repv" -> {
                         saveSeriesToFirebase(userId!!, workoutId!!, seriesCount)
@@ -680,12 +688,26 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                         updateUI()
                     }
                 }
+
             }
             // Gérer les autres états au besoin.
             else -> {
                 // Ajouter des cas pour d'autres états si nécessaire.
             }
         }
+    }
+    private fun handleArmDetails(command: String) {
+        feedbackMessage =when (command) {
+            "Gval", "Gnva" -> "Bras gauche incorrect."
+            "Dval", "Dnva" -> "Bras droit incorrect."
+            "Cval", "Cnva" -> "Tous les bras corrects."
+            else -> ""
+        }
+        if (timerValue > 0) {
+            countdownTimer?.cancel()
+            timerValue = 0
+        }
+        updateUI()
     }
 
     /**
