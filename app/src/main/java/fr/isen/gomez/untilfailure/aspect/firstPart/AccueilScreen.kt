@@ -20,7 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.viewModel.firstPart.AccueilViewModel
 
@@ -30,58 +32,74 @@ fun AccueilScreen(viewModel: AccueilViewModel) {
 
     // UI redéfinie avec Material3
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Black,
         content = { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .background(Color.Red)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
+                    //.padding(padding)
+                    .background(Color.Black),
+                    //.padding(16.dp),
+                verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.untilfailure),
-                    contentDescription = "Until Failure Logo",
+                    painter = painterResource(id = R.drawable.acceuil_image),
+                    contentDescription = "Background Image",
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(300.dp)  // Adjust this height to manage the space for the image
+                )
+
+                Text(
+                    "LIMITBREAKER",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.limitbreaker_logo),
+                    contentDescription = "LimitBreaker Logo",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
                         .padding(vertical = 16.dp)
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                ActionButton("Connexion") {
+                ActionButton("Connexion", Color(0xFFFF0000)) {
                     viewModel.navigateToConnexion(context)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                ActionButton("Inscription") {
+                ActionButton("Inscription", Color(0xFFFF0000)) {
                     viewModel.navigateToInscription(context)
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Image(
+                /*Image(
                     painter = painterResource(id = R.drawable.dumbbell),
                     contentDescription = "Dumbbell",
                     modifier = Modifier.padding(vertical = 16.dp)
-                )
+                )*/
             }
         }
     )
 }
 
 @Composable
-fun ActionButton(text: String, onClick: () -> Unit) {
+fun ActionButton(text: String, backgroundColor: Color, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+        colors = ButtonDefaults.buttonColors(backgroundColor)
     ) {
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+        Text(text, style = MaterialTheme.typography.bodyLarge.copy(color = Color.White))
     }
 }

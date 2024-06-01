@@ -32,6 +32,7 @@ class SettingsViewModel : ViewModel() {
             usersRef.child(currentUser.uid).child("objectif").setValue(newObjective)
                 .addOnSuccessListener {
                     Log.d("UpdateObjective", "Objective successfully updated.")
+
                 }
                 .addOnFailureListener {
                     Log.e("UpdateObjective", "Failed to update objective.", it)
