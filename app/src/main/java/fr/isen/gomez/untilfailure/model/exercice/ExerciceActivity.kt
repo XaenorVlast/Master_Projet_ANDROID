@@ -8,17 +8,21 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -35,10 +39,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.MutableLiveData
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import fr.isen.gomez.untilfailure.BLEManager
@@ -48,6 +51,7 @@ import fr.isen.gomez.untilfailure.model.screenPrincipal.EcranPrincipalActivity
 import java.util.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import fr.isen.gomez.untilfailure.R
 
 class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
     private val SERVICE_UUID = UUID.fromString("00000000-cc7a-482a-984a-7f2ed5b3e58f")
@@ -82,10 +86,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
         exerciseName = intent.getStringExtra("EXERCISE_NAME")
         userId = FirebaseAuth.getInstance().currentUser?.uid
 
-        // Démarrer une nouvelle séance d'entraînement si le nom de l'exercice est fourni
-        if (exerciseName != null && userId != null) {
-            startNewWorkout(userId!!, exerciseName!!)
-        }
+
 
         // Configurer l'écoute des notifications Bluetooth
         setupNotificationListener()
@@ -160,26 +161,58 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
         }
     }
 
+
+
+
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun ExerciseVideo(exerciseName: String?) {
-        when (exerciseName) {
-            "squat" -> VideoPlayer(videoUrl = "url_to_squat_video")
-            "bench" -> VideoPlayer(videoUrl = "url_to_bench_video")
-            "deadlift" -> VideoPlayer(videoUrl = "url_to_deadlift_video")
-            else -> Text("Pas de vidéo disponible pour cet exercice.")
+    fun ImageCarousel(images: List<Int>, modifier: Modifier = Modifier) {
+        val pagerState = rememberPagerState(
+            initialPage = 0,
+            pageCount = { images.size }
+        )
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = modifier.fillMaxWidth()
+        ) { page ->
+            Image(
+                painter = painterResource(id = images[page]),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            )
         }
     }
 
-    @Composable
-    fun VideoPlayer(videoUrl: String) {
-        AndroidView(factory = { context ->
-            // Utilisez votre lecteur vidéo ici; par exemple, intégrez un VideoView ou un lecteur externe
-            VideoView(context).apply {
-                setVideoPath(videoUrl)
-                start()
-            }
-        })
+
+    private fun getImagesForExercise(exerciseName: String): List<Int> {
+        return when (exerciseName) {
+            "Bench" -> listOf(R.drawable.bench1, R.drawable.bench2)
+            "Squat" -> listOf(R.drawable.squat1, R.drawable.squat2)
+            "Deadlift" -> listOf(R.drawable.deadlift1, R.drawable.deadlift2)
+            else -> emptyList()
+        }
     }
+
+    private fun getInstructionTextForExercise(exerciseName: String): String {
+        return when (exerciseName) {
+            "Bench" -> {
+                "Coudes rapprochés du corps, barre jusqu'aux pectoraux, mains sur les marques"
+            }
+            "Squat" -> {
+                "Cassez la parallèle légèrement, gainez les abdos, attention pas trop de poids sur les bras"
+            }
+            "Deadlift" -> {
+                "Abaissez les épaules, recrutez les dorsaux, barre contre les jambes"
+            }
+            else -> "Suivez les conseils dans la vidéo pour réaliser votre répétition de référence."
+        }
+    }
+
+
+
 
     // Fonction pour récupérer l'objectif de l'utilisateur
     private fun fetchUserObjective(onResult: (String) -> Unit) {
@@ -255,28 +288,98 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                         Text("Prêt à commencer la séance.", style = MaterialTheme.typography.bodyLarge)
                     }
                     ExerciseState.AWAITING_REFERENCE_CONFIRMATION -> {
-                        Text("En attente de la confirmation de la répétition de référence.", style = MaterialTheme.typography.bodyLarge)
-                        ExerciseVideo(exerciseName)
-                        Text("Suivez les conseils dans la vidéo pour réaliser votre répétition de référence.", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "En attente de la confirmation de la répétition de référence.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        exerciseName?.let { name ->
+                            val images = getImagesForExercise(name)
+                            if (images.isNotEmpty()) {
+                                ImageCarousel(images, Modifier.weight(1f))
+                            }
+                            Text(
+                                getInstructionTextForExercise(name),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        } ?: run {
+                            // Provide a default message if exerciseName is null
+                            Text(
+                                "Suivez les conseils dans la vidéo pour réaliser votre répétition de référence.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
                     }
                     ExerciseState.AWAITING_REFERENCE_VALIDATION -> {
-                        Text("Validation de la répétition de référence en cours.", style = MaterialTheme.typography.bodyLarge)
-                        ExerciseVideo(exerciseName)
-                        Text("Suivez les conseils dans la vidéo pour réaliser la validation de la répétition de référence.", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Validation de la répétition de référence en cours.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        exerciseName?.let { name ->
+                            val images = getImagesForExercise(name)
+                            if (images.isNotEmpty()) {
+                                ImageCarousel(images, Modifier.weight(1f))
+                            }
+                            Text(
+                                getInstructionTextForExercise(name),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        } ?: run {
+                            // Provide a default message if exerciseName is null
+                            Text(
+                                "Suivez les conseils dans la vidéo pour valider votre répétition de référence.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
                     }
 
                     ExerciseState.RECORDING_REPETITIONS -> {
-                        Text("Enregistrement des répétitions.", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            text = "Poids de la barre : $barWeight kg",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Blue
-                        )
-                        Text("Répétitions valides : $validReps", style = MaterialTheme.typography.bodyLarge, color = Color.Green)
-                        Text("Répétitions non valides : $invalidReps", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
-                        Text("Répétitions recommandées : $recommendedReps", style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
-                        if (feedbackMessage.isNotEmpty() && exerciseName=="Bench") {
-                            Text(feedbackMessage, style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Enregistrement des répétitions.",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Poids de la barre : $barWeight kg",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Blue
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Répétitions valides : $validReps",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Green
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Répétitions non valides : $invalidReps",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Red
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Répétitions recommandées : $recommendedReps",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Magenta
+                            )
+                            if (feedbackMessage.isNotEmpty() && exerciseName == "Bench") {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = feedbackMessage,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Magenta
+                                )
+                            }
                         }
                     }
 
@@ -383,16 +486,41 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                     }
 
                     ExerciseState.RECORDING_REPETITIONS -> {
-                        Text("Enregistrement des répétitions.", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            text = "Poids de la barre : $barWeight kg",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Blue
-                        )
-                        Text("Répétitions valides : $validReps", style = MaterialTheme.typography.bodyLarge, color = Color.Green)
-                        Text("Répétitions non valides : $invalidReps", style = MaterialTheme.typography.bodyLarge, color = Color.Red)
-                        if (feedbackMessage.isNotEmpty() && exerciseName=="Bench") {
-                            Text(feedbackMessage, style = MaterialTheme.typography.bodyLarge, color = Color.Magenta)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Enregistrement des répétitions.",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Poids de la barre : $barWeight kg",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Blue
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Répétitions valides : $validReps",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Green
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Répétitions non valides : $invalidReps",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Red
+                            )
+                            if (feedbackMessage.isNotEmpty() && exerciseName == "Bench") {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = feedbackMessage,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Magenta
+                                )
+                            }
                         }
                     }
                     ExerciseState.SESSION_ENDED -> {
@@ -471,7 +599,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             val presetDuration = when (currentObjective) {
                 "Force" -> 300  // 5 minutes
                 "Haltérophilie" -> 120  // 2 minutes
-                else -> 180  // Autre cas, par défaut à 3 minutes
+                else -> 10  // Autre cas, par défaut à 3 minutes
             }
 
             // Appel immédiat du callback avec la durée prédéfinie
@@ -552,7 +680,7 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
             guidanceText.value = when (objective) {
                 "Haltérophilie" -> when (seriesCount) {
                     0 -> "Sélectionner un poids à 50% de votre charge max pour la première série."
-                    1 -> "Sélectionner un poids à 60% de votre charge max pour la deuxième série."
+                    1 -> "Sélectionner un poids à 60% de votre charge max pour la deuxième série. "
                     else -> "Sélectionner un poids à 65% de votre charge max pour les autres séries."
                 }
                 "Force" -> when (seriesCount) {
@@ -688,6 +816,10 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
                 when (receivedData) {
                     "vals" -> {
                         // Si la donnée reçue est "vals", passer à l'enregistrement des répétitions.
+                        // Démarrer une nouvelle séance d'entraînement si le nom de l'exercice est fourni
+                        if (exerciseName != null && userId != null) {
+                            startNewWorkout(userId!!, exerciseName!!)
+                        }
                         currentState = ExerciseState.RECORDING_REPETITIONS
                         updateUI()  // Mise à jour de l'interface utilisateur après changement d'état
                     }
