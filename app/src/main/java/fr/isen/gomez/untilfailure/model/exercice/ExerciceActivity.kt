@@ -11,9 +11,13 @@ import android.widget.Toast
 import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -27,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -93,22 +98,46 @@ class ExerciceActivity : ComponentActivity(), BLEManager.NotificationListener {
         // Définir le contenu de l'UI avec une sélection initiale du mode de session
         setContent {
             Surface(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Choisir le mode de session", style = MaterialTheme.typography.bodyLarge)
-                    Button(onClick = {
-                        currentSessionMode = SessionMode.GUIDED
-                        updateUI() // Appel pour rafraîchir l'UI après la sélection
-                    }) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Choisir le mode de session",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    Text(
+                        "Veuillez choisir votre type de séance ci-dessous :",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            currentSessionMode = SessionMode.GUIDED
+                            updateUI() // Appel pour rafraîchir l'UI après la sélection
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text("Session Guidée")
                     }
-                    Button(onClick = {
-                        currentSessionMode = SessionMode.NON_GUIDED
-                        updateUI() // Appel pour rafraîchir l'UI après la sélection
-                    }) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            currentSessionMode = SessionMode.NON_GUIDED
+                            updateUI() // Appel pour rafraîchir l'UI après la sélection
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text("Session Non Guidée")
                     }
                 }
             }
+
         }
     }
 

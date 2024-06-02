@@ -7,6 +7,7 @@ import fr.isen.gomez.untilfailure.viewModel.ble.ScanViewModel
 import SettingsScreen
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
@@ -53,6 +54,7 @@ import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SeanceViewModel
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SettingsViewModel
 import androidx.activity.viewModels
 import fr.isen.gomez.untilfailure.data.nfc.OnTagDiscoveryCompletedListener
+import fr.isen.gomez.untilfailure.model.exercice.ExerciceActivity
 
 class EcranPrincipalActivity : ComponentActivity() , OnTagDiscoveryCompletedListener {
     private lateinit var permissionsHelper: PermissionsHelper
@@ -112,15 +114,13 @@ class EcranPrincipalActivity : ComponentActivity() , OnTagDiscoveryCompletedList
 
     override fun onTagDiscoveryCompleted(nfcTag: Tag?, productId: TagHelper.ProductID?) {
         if (nfcTag != null) {
-            this.nfcTag = nfcTag
             val ndef = Ndef.get(nfcTag)
             try {
                 ndef?.connect()
                 val ndefMessage = ndef?.ndefMessage
                 val payload = ndefMessage?.records?.firstOrNull()?.payload
-                val tagName = payload?.let { String(it, Charsets.UTF_8).substring(3) } ?: "Unknown"
-                SeanceViewModel.updateTagInfo(tagName)
-                Toast.makeText(this, "Detected Tag: ${SeanceViewModel.tagName.value}", Toast.LENGTH_SHORT).show()
+                val exerciseName = payload?.let { String(it, Charsets.UTF_8).substring(3) } ?: "Unknown"
+                SeanceViewModel.updateTagInfo(exerciseName)
             } finally {
                 ndef?.close()
             }
@@ -128,7 +128,6 @@ class EcranPrincipalActivity : ComponentActivity() , OnTagDiscoveryCompletedList
             Toast.makeText(this, "Tag discovery failed!", Toast.LENGTH_LONG).show()
         }
     }
-
 
 
     private fun enableNfcForegroundDispatch() {

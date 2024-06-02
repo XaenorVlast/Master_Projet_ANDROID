@@ -52,18 +52,15 @@ class SeanceViewModel : ViewModel() {
     fun discoverTag(tag: Tag, listener: OnTagDiscoveryCompletedListener) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                // Logique pour lire les données du tag ici
-                tag
+                tag // Pass the tag directly
             }
-            listener.onTagDiscoveryCompleted(result, TagHelper.ProductID())  // Assurez-vous que TagHelper.ProductID() est correctement implémenté
+            listener.onTagDiscoveryCompleted(result, TagHelper.ProductID()) // Replace with actual product ID
         }
     }
 
-
     fun updateTagInfo(tagName: String) {
-        _tagName.value = tagName  // Met à jour l'état du tag name dans le ViewModel
+        _tagName.value = tagName
     }
-
 }
 
 

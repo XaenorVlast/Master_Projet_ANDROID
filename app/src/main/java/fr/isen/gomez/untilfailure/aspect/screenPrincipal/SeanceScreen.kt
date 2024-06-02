@@ -44,7 +44,8 @@ import fr.isen.gomez.untilfailure.data.nfc.NfcState
 @Composable
 fun SeanceScreen(
     seanceViewModel: SeanceViewModel = viewModel(),
-    scanViewModel: ScanViewModel = viewModel()
+    scanViewModel: ScanViewModel = viewModel(),
+    tagName: String = seanceViewModel.tagName.collectAsState().value
 ) {
     val exercises = seanceViewModel.exercises.collectAsState().value
     val isConnected = scanViewModel.connectionState.collectAsState().value
@@ -62,7 +63,7 @@ fun SeanceScreen(
                 modifier = Modifier.padding(16.dp)
             )
         } else {
-            NFCStatus(nfcState, tagName)
+          //  Text("Tag Detected: $tagName")
             ExerciseButtons(
                 exercises = exercises,
                 isConnected = isConnected,
@@ -79,27 +80,7 @@ fun SeanceScreen(
         }
     }
 }
-@Composable
-fun NFCStatus(nfcState: NfcState, tagName: String) {
-    Text(
-        text = when (nfcState) {
-            NfcState.Available -> "NFC disponible - Approchez un tag"
-            NfcState.NotAvailable -> "NFC non disponible"
-            else -> "Statut NFC inconnu"
-        },
-        style = MaterialTheme.typography.bodyLarge,
-        color = if (nfcState == NfcState.NotAvailable) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(8.dp)
-    )
-    if (tagName.isNotEmpty()) {
-        Text(
-            "Tag détecté: $tagName",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
-}
+
 
 @Composable
 fun ExerciseButtons(
