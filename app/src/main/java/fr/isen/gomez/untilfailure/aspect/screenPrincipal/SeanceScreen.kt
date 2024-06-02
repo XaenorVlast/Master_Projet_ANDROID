@@ -34,8 +34,10 @@ import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SeanceViewModel
 
 
 import android.content.Intent
+import androidx.compose.runtime.getValue
 
 import androidx.compose.ui.platform.LocalContext
+import fr.isen.gomez.untilfailure.data.nfc.NfcState
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -47,6 +49,8 @@ fun SeanceScreen(
     val exercises = seanceViewModel.exercises.collectAsState().value
     val isConnected = scanViewModel.connectionState.collectAsState().value
     val context = LocalContext.current
+    val nfcState by seanceViewModel.nfcState.collectAsState()
+    val tagName by seanceViewModel.tagName.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         SectionTitle(title = "Choisissez votre exercice")
@@ -58,6 +62,7 @@ fun SeanceScreen(
                 modifier = Modifier.padding(16.dp)
             )
         } else {
+            NFCStatus(nfcState, tagName)
             ExerciseButtons(
                 exercises = exercises,
                 isConnected = isConnected,
@@ -74,7 +79,27 @@ fun SeanceScreen(
         }
     }
 }
-
+@Composable
+fun NFCStatus(nfcState: NfcState, tagName: String) {
+    Text(
+        text = when (nfcState) {
+            NfcState.Available -> "NFC disponible - Approchez un tag"
+            NfcState.NotAvailable -> "NFC non disponible"
+            else -> "Statut NFC inconnu"
+        },
+        style = MaterialTheme.typography.bodyLarge,
+        color = if (nfcState == NfcState.NotAvailable) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(8.dp)
+    )
+    if (tagName.isNotEmpty()) {
+        Text(
+            "Tag détecté: $tagName",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(8.dp)
+        )
+    }
+}
 
 @Composable
 fun ExerciseButtons(

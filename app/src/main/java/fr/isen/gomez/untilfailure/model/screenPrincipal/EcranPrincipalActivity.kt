@@ -6,8 +6,13 @@ import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.PerformanceViewModel
 import fr.isen.gomez.untilfailure.viewModel.ble.ScanViewModel
 import SettingsScreen
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Intent
+import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.Ndef
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -41,14 +46,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fr.isen.gomez.untilfailure.R
 import fr.isen.gomez.untilfailure.aspect.screenPrincipal.SeanceScreen
+import fr.isen.gomez.untilfailure.data.nfc.TagHelper
 import fr.isen.gomez.untilfailure.model.firstPart.AccueilActivity
 import fr.isen.gomez.untilfailure.viewModel.ble.PermissionsHelper
+import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SeanceViewModel
 import fr.isen.gomez.untilfailure.viewModel.screenPrincipal.SettingsViewModel
-class EcranPrincipalActivity : ComponentActivity() {
+import androidx.activity.viewModels
+import fr.isen.gomez.untilfailure.data.nfc.OnTagDiscoveryCompletedListener
+
+class EcranPrincipalActivity : ComponentActivity() , OnTagDiscoveryCompletedListener {
     private lateinit var permissionsHelper: PermissionsHelper
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var scanViewModel: ScanViewModel
-
+    private var nfcAdapter: NfcAdapter? = null
+    private val SeanceViewModel: SeanceViewModel by viewModels()
+    private var nfcTag: Tag? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -60,6 +72,7 @@ class EcranPrincipalActivity : ComponentActivity() {
         ) { permissions ->
             if (permissions.all { it.value }) {
                 setContent { MainContent(scanViewModel) }
+                nfcAdapter = NfcAdapter.getDefaultAdapter(this)
             } else {
                 // Gérer le cas où les permissions ne sont pas accordées
                 val intent = Intent(this@EcranPrincipalActivity, AccueilActivity::class.java)
@@ -70,8 +83,63 @@ class EcranPrincipalActivity : ComponentActivity() {
         }
 
         checkAndRequestPermissions()
+
     }
 
+    override fun onResume() {
+        super.onResume()
+        SeanceViewModel.checkNfcAvailability(nfcAdapter)
+        enableNfcForegroundDispatch()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        disableNfcForegroundDispatch()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val action = intent.action
+        if (action == NfcAdapter.ACTION_NDEF_DISCOVERED || action == NfcAdapter.ACTION_TECH_DISCOVERED ||
+            action == NfcAdapter.ACTION_TAG_DISCOVERED) {
+            val androidTag: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+            if (androidTag != null) {
+                SeanceViewModel.discoverTag(androidTag, this)  // Assurez-vous que le ViewModel traite cette méthode correctement
+            }
+        }
+    }
+
+    override fun onTagDiscoveryCompleted(nfcTag: Tag?, productId: TagHelper.ProductID?) {
+        if (nfcTag != null) {
+            this.nfcTag = nfcTag
+            val ndef = Ndef.get(nfcTag)
+            try {
+                ndef?.connect()
+                val ndefMessage = ndef?.ndefMessage
+                val payload = ndefMessage?.records?.firstOrNull()?.payload
+                val tagName = payload?.let { String(it, Charsets.UTF_8).substring(3) } ?: "Unknown"
+                SeanceViewModel.updateTagInfo(tagName)
+                Toast.makeText(this, "Detected Tag: ${SeanceViewModel.tagName.value}", Toast.LENGTH_SHORT).show()
+            } finally {
+                ndef?.close()
+            }
+        } else {
+            Toast.makeText(this, "Tag discovery failed!", Toast.LENGTH_LONG).show()
+        }
+    }
+
+
+
+    private fun enableNfcForegroundDispatch() {
+        val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+        nfcAdapter?.enableForegroundDispatch(this, pendingIntent, null, null)
+    }
+
+    private fun disableNfcForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(this)
+    }
     private fun checkAndRequestPermissions() {
         if (!permissionsHelper.hasAllPermissions()) {
             permissionsHelper.requestNeededPermissions(requestPermissionLauncher)
